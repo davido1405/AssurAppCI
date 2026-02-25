@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1099189873010",
+    "project_id": "assurappci-d91ea",
+    "storage_bucket": "assurappci-d91ea.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1099189873010:android:9128f4435234a39e15d5eb",
+        "android_client_info": {
+          "package_name": "com.assurappci.assurappci"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-nk3759SSukKL9IauLyq7B3WJOSpol_0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
