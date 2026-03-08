@@ -1,11 +1,15 @@
 import 'package:assurappci/Models/Pharmacie.dart';
 import 'package:assurappci/Models/Session.dart';
+import 'package:assurappci/Repositories/NewsLetterRepository.dart';
 import 'package:assurappci/Screens/General/DetailsPharmacie.dart';
+import 'package:assurappci/Screens/General/Newsletters.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
+import 'package:assurappci/ViewModels/NewsletterViewModel.dart';
 import 'package:assurappci/ViewModels/PharmacieViewModel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 class Accueil extends StatefulWidget {
@@ -27,7 +31,12 @@ class _AccueilState extends State<Accueil> {
 
   String filtre="tous";
   List<Pharmacie>toutesPharmacies=[];
-  Session? userConnecte;
+  int totalAnnonces=0;
+
+  String lat='';
+  String long='';
+
+  TextEditingController terme=TextEditingController();
 
   Future<void>recupererPharmacie()async{
     final pharmacieViewModel=context.read<PharmacieViewModel>();
@@ -37,9 +46,11 @@ class _AccueilState extends State<Accueil> {
 
       switch (filtre) {
         case "tous":
+          final ville=context.read<AuthViewModel>().session?.villeUtilisateur ??'';
+          print(ville);
           if (mounted) {
             setState(() {
-              toutesPharmacies = pharmacieViewModel.pharmacies;
+              toutesPharmacies = pharmacieViewModel.pharmacies.where((p)=>p.villePharmacie.contains(ville)).toList();
             });
           }
         case "assurance":
@@ -61,9 +72,50 @@ class _AccueilState extends State<Accueil> {
                   .toList();
             });
           }
+        default:
+
       }
+    }else{
+      print(pharmacieViewModel.errorMessage);
     }
   }
+
+  Future<void>rechercherPharmacie()async{
+    final resultat=await context.read<PharmacieViewModel>().rechercherPharmacie(terme.text.isEmpty?null:terme.text, double.tryParse(lat), double.tryParse(long));
+
+    if(resultat.isNotEmpty){
+      setState(() {
+        toutesPharmacies=resultat??[];
+      });
+    }else{
+      setState(() {
+        toutesPharmacies=[];
+      });
+    }
+  }
+
+  //Récupérer position de l'utilisateur*
+  Future<Position>_getPosition()async{
+    bool serviceEnabled=await Geolocator.isLocationServiceEnabled();
+    if(!serviceEnabled){
+      return Future.error('Veuillez autoriter la localisation pour cette application');
+    }
+
+    LocationPermission permission=await Geolocator.checkPermission();
+
+    if(permission==LocationPermission.denied){
+      permission =await Geolocator.requestPermission();
+      if(permission==LocationPermission.denied){
+        return Future.error("Localisation non autorisé");
+      }
+    }
+
+    if(permission ==LocationPermission.deniedForever){
+      return Future.error("Localisation n'est pas autorisé. Nous ne pouvons pas accéder à votre position");
+    }
+    return await Geolocator.getCurrentPosition();
+  }
+
 
 
 
@@ -72,10 +124,10 @@ class _AccueilState extends State<Accueil> {
     return Material(
       color: Colors.grey[100],
       child: SafeArea(child: RefreshIndicator(
-          onRefresh: toutePharmacie,
+          onRefresh: recupererPharmacie,
           child: SingleChildScrollView(
             scrollDirection: Axis.vertical,
-            physics: ScrollPhysics(),
+            physics: AlwaysScrollableScrollPhysics(),
             child: Column(
               children: [
                 Container(
@@ -94,16 +146,18 @@ class _AccueilState extends State<Accueil> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text("Salut ! Bienvenu(e)",style: TextStyle(fontSize: 20.sp,color: Colors.grey[500]),),
-                              Text(context.watch<AuthViewModel>().session?.nomUtilisateur ?? 'Utilisateur',style: TextStyle(fontSize: 25.sp,fontWeight: FontWeight.bold),)
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                  child: Text("${context.watch<AuthViewModel>().session?.nomUtilisateur} ${context.watch<AuthViewModel>().session?.prenomUtilisateur}" ?? 'Utilisateur' ,style: TextStyle(fontSize: 20.sp,fontWeight: FontWeight.bold),overflow: TextOverflow.ellipsis,))
                             ],
                           ),
                           Container(
                             child: Row(
                               children: [
-                                Badge(label:Text('2'),
+                                Badge(label:Text("$totalAnnonces"),
                                     child: IconButton(onPressed: (){
-                                      //Navigator.push(context, MaterialPageRoute(builder: (context)=>Notification()));
-                                    }, icon: Icon(Icons.notifications_outlined))),
+                                      Navigator.push(context, MaterialPageRoute(builder: (context)=>Newsletters()));
+                                      }, icon: Icon(Icons.notifications_outlined))),
                                 IconButton(onPressed: (){}, icon: Icon(Icons.settings))
                               ],
                             ),
@@ -111,9 +165,13 @@ class _AccueilState extends State<Accueil> {
                         ],),
                         SizedBox(height: 15.h,),
                         TextField(
+                          controller: terme,
                           decoration: InputDecoration(
                             hintText: "Rechercher",
-                            prefixIcon: Icon(Icons.search),
+                            suffixIcon: IconButton(onPressed: ()async{
+                              print("Recherche lancé");
+                              await rechercherPharmacie();
+                            }, icon: Icon(Icons.search)),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(30.r),
                             ),
@@ -131,6 +189,8 @@ class _AccueilState extends State<Accueil> {
                                 setState(() {
                                   filtre="tous";
                                 });
+
+                                recupererPharmacie();
                               }, label: Text("Toutes les pharmacies",style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: filtre=="tous"?Colors.white:Colors.deepOrangeAccent,
@@ -142,10 +202,15 @@ class _AccueilState extends State<Accueil> {
                                   backgroundColor: filtre=="tous"?Colors.deepOrangeAccent:Colors.white
                               ),),
                               SizedBox(width: 15.w,),
-                              TextButton.icon(onPressed: (){
+                              TextButton.icon(onPressed: () async{
                                 setState(() {
                                   filtre="adresse";
                                 });
+                                _getPosition().then((value){
+                                  lat='${value.latitude}';
+                                  long='${value.longitude}';
+                                });
+                                rechercherPharmacie();
                               }, label: Text("Près de moi",style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: filtre=="adresse"?Colors.white:Colors.deepOrangeAccent,
@@ -161,6 +226,7 @@ class _AccueilState extends State<Accueil> {
                                 setState(() {
                                   filtre="assurance";
                                 });
+                                recupererPharmacie();
                               }, label: Text("Assurances",style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: filtre=="assurance"?Colors.white:Colors.deepOrangeAccent,
@@ -212,80 +278,143 @@ class _AccueilState extends State<Accueil> {
     );
   }
 
-  Future<void> toutePharmacie() async {
-  }
-
   Widget cardPharmacie(Pharmacie pharmacie){
     return GestureDetector(
-      onTap: (){
+      onTap: () async {
         if(mounted){
           Navigator.push(context, MaterialPageRoute(builder: (context)=>Detailspharmacie(pharmacie: pharmacie)));
         }
         },
       child: SizedBox(
-        height: 110.h,
+        height: 125.h,
         child: Card(
           color: Colors.white,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-          ClipRRect(borderRadius: BorderRadius.circular(12.r),child: Image.asset("assets/images/a.jpg",width: 100.w,height: 50.h,),),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(pharmacie.nomPharmacie,style: TextStyle(
-                  fontWeight: FontWeight.bold,fontSize: 20.sp
-              ),),
-              Row(
-                children: [
-                  Icon(Icons.location_on_outlined,color: Colors.grey,),
-                  FittedBox(
-                    fit: BoxFit.fill,
-                    child: Text(pharmacie.adresseFournit,style: TextStyle(
-                        fontWeight: FontWeight.w500,
-                      color: Colors.grey[500]
-                    ),overflow: TextOverflow.ellipsis,),
-                  )
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                Container(
-                  height: 35.h,
-                  width: 120.w,
-                  decoration: BoxDecoration(
-                    color: pharmacie.libelleStatut=="Actif"?Colors.green:Colors.red,
-                    borderRadius: BorderRadius.circular(12.r)
-                  ),
-                  child: Center(child: Text("Ouvert 07h-22h",style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white
-                  ),)),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12.r),
+                child: pharmacie.photoPharmacie != null
+                    ? Image.network(
+                  pharmacie.photoPharmacie!,
+                  width: 100.w,
+                  height: 110.h,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 100.w,
+                      height: 110.h,
+                      color: Colors.grey[300],
+                      child: Icon(
+                        Icons.local_pharmacy,
+                        size: 40.sp,
+                        color: Colors.grey[600],
+                      ),
+                    );
+                  },
+                )
+                    : Image.asset(
+                  "assets/images/a.jpg",
+                  width: 100.w,
+                  height: 110.h,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 100.w,
+                      height: 110.h,
+                      color: Colors.grey[300],
+                      child: Icon(
+                        Icons.local_pharmacy,
+                        size: 40.sp,
+                        color: Colors.grey[600],
+                      ),
+                    );
+                  },
                 ),
-                SizedBox(width: 10.w,),
-                Container(
-                  height: 30.h,
-                  width: 50.w,
-                  decoration: BoxDecoration(
-                      color: Colors.deepOrangeAccent,
-                      borderRadius: BorderRadius.circular(12.r)
+              ),SizedBox(width: 12.w,),
+              Expanded(
+                child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(pharmacie.nomPharmacie,style: TextStyle(
+                      fontWeight: FontWeight.bold,fontSize: 20.sp
+                  ),overflow: TextOverflow.ellipsis,),
+                ),
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Icon(Icons.location_on_outlined,color: Colors.grey,),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(pharmacie.adresseFournit,style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                          color: Colors.grey[500]
+                        ),overflow: TextOverflow.ellipsis,),
+                      )
+                    ],
                   ),
-                  child: Center(child: Text("1.2km",style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white
-                  ),)),
-                ),SizedBox(width: 10.w,),
-                GestureDetector(
-                    onTap: (){
-                      print("Absorbé");
-                    },
-                    child: Text("Détails",style: TextStyle(color: Colors.deepOrangeAccent),),
+                ),
+                Container(child: Text(pharmacie.villePharmacie??"Ville inconnue",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 18.sp),),),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                  Flexible(
+                    flex:3,
+                    child: Container(
+                      height: 35.h,
+                      decoration: BoxDecoration(
+                        color: pharmacie.libelleStatut=="Actif"?Colors.green:Colors.red,
+                        borderRadius: BorderRadius.circular(12.r)
+                      ),
+                      child: Center(child: Text("Ouvert de ${pharmacie.horrairesOuverture}",style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white
+                      ),)),
+                    ),
                   ),
-              ],)
-            ],
-          )
+                    SizedBox(width: 10.w,),
+
+                  if( toutesPharmacies.isNotEmpty && filtre=="adresse" && pharmacie.distance!=null)...[
+                    SizedBox(width: 8.w,),
+                    Container(
+                      height: 32.h,
+                      padding: EdgeInsets.symmetric(horizontal: 10.w,vertical: 4.h),
+                      decoration: BoxDecoration(
+                          color: Colors.deepOrangeAccent,
+                          borderRadius: BorderRadius.circular(8.r)
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.near_me,
+                            color: Colors.white,
+                            size: 14.sp,
+                          ),
+                          SizedBox(width: 4.w),
+                          Text(
+                            pharmacie.distance as String,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 11.sp,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ]
+
+                ],)
+                            ],
+                          ),
+              )
                 ],),),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:assurappci/Screens/Auth/Inscription.dart';
 import 'package:assurappci/Screens/Auth/RecoverPassword.dart';
 import 'package:assurappci/Screens/General/Accueil.dart';
 import 'package:assurappci/Screens/General/Dashboard.dart';
+import 'package:assurappci/Screens/Pharmacie/DashboardGerant.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -31,7 +32,11 @@ class _ConnexionState extends State<Connexion> {
 
     //Si pas d'erreur on navigue
     if(authViewModel.errorMessage==null){
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Dashboard()), (route)=>false);
+      if(authViewModel.session?.typeUtilisateur=="Gestionnaire de pharmacie"){
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>DashboardGerant()), (route)=>false);
+      }else{
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>Dashboard()), (route)=>false);
+      }
     }
   }
 

@@ -1,5 +1,11 @@
+import 'package:assurappci/Models/Newsletter.dart';
+import 'package:assurappci/Screens/General/Abonnements.dart';
+import 'package:assurappci/ViewModels/AuthViewModel.dart';
+import 'package:assurappci/ViewModels/NewsletterViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
 
 class Abonnements extends StatefulWidget {
   const Abonnements({super.key});
@@ -10,8 +16,47 @@ class Abonnements extends StatefulWidget {
 
 class _AbonnementsState extends State<Abonnements> {
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    Future.microtask(recupererAbonnement);
+  }
+
   // Pour l'instant une liste vide, à connecter au ViewModel plus tard
-  List<String> abonnements = [];
+  List<Newsletter> abonnements = [];
+
+  Future<void>recupererAbonnement()async{
+    final newletterViewModel=context.read<Newsletterviewmodel>();
+    final codeUtilisateur = context.read<AuthViewModel>().session?.codeUtilisateur ?? '';
+    if (codeUtilisateur.isEmpty) return; // ← on arrête si pas de session
+    await newletterViewModel.init(codeUtilisateur);
+    if(newletterViewModel.errorMessage==null){
+      if(mounted){
+        setState(() {
+          abonnements=newletterViewModel.newsLetter.toList();
+        });
+      }
+    }else{
+      print(newletterViewModel.errorMessage);
+    }
+  }
+  
+  Future<void>desouscrirAbonnement(Newsletter abonnement)async{
+    final newletterViewmodel=context.read<Newsletterviewmodel>();
+    
+    final codeUtilisateur=context.read<AuthViewModel>().session?.codeUtilisateur ??'';
+    
+    if(codeUtilisateur.isEmpty) return;
+    await newletterViewmodel.desabonner(abonnement.codePharmacie, codeUtilisateur);
+    if(newletterViewmodel.errorMessage==null){
+      if(mounted){
+        await recupererAbonnement();
+      }
+    }else{
+      print(newletterViewmodel.errorMessage);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +90,7 @@ class _AbonnementsState extends State<Abonnements> {
                   : ListView.builder(
                   itemCount: abonnements.length,
                   itemBuilder: (context, index) {
-                    return cardAbonnement(abonnements[index]);
+                    return cardAbonnement(abonnements[index],()=>desouscrirAbonnement(abonnements[index]));
                   }
               ),
             )
@@ -96,7 +141,7 @@ class _AbonnementsState extends State<Abonnements> {
   }
 }
 
-Widget cardAbonnement(String nomPharma) {
+Widget cardAbonnement(Newsletter abonnement,VoidCallback action) {
   return Container(
     margin: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
     padding: EdgeInsets.all(10.w),
@@ -120,24 +165,27 @@ Widget cardAbonnement(String nomPharma) {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(nomPharma, style: TextStyle(
+              Text(abonnement.nomPharmacie, style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16.sp
               )),
-              Text("Notifications activées", style: TextStyle(color: Colors.grey[400])),
+              Text("Abonnement ${abonnement.statut_abonnement.toLowerCase()}", style: TextStyle(color: Colors.grey[400])),
             ],
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.grey[200],
-              shape: BoxShape.circle
-          ),
-          child: IconButton(
-              onPressed: () {},
-              icon: Icon(Icons.notifications_off_outlined, color: Colors.grey)
-          ),
-        )
+        GestureDetector(
+          onTap: action,
+          child: Container(
+            decoration: BoxDecoration(
+                color: Colors.grey[200],
+                shape: BoxShape.circle
+            ),
+            child: Padding(
+              padding: EdgeInsets.all(8.0.w),
+              child: Icon(abonnement.statut_abonnement=="Actif"?Icons.notifications_off_outlined:Icons.notifications_outlined, color: Colors.grey),
+            ),
+            ),
+        ),
       ],
     ),
   );

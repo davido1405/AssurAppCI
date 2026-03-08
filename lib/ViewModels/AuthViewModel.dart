@@ -27,8 +27,19 @@ class AuthViewModel extends ChangeNotifier {
     final jwt = await _repository.getSecureJwt();
     final codeUtilisateur = await _repository.recupererCodeUtilisateur();
 
-    if (jwt != null && codeUtilisateur != null) {
-      _session = (await _repository.recupererProfil(codeUtilisateur)) as Session?;
+    _numeroSauvegarde=await _repository.recupererNumero();
+
+    if (jwt != null && jwt.isNotEmpty &&
+        codeUtilisateur != null && codeUtilisateur.isNotEmpty) {
+      final profil = (await _repository.recupererProfil(codeUtilisateur)) as Session?;
+
+      if(profil!=null){
+        _session=profil;
+      }else {
+        print('Profil null, suppression du token');
+        await _repository.removeToken();
+        _session = null;
+      }
     }
     notifyListeners();
   }
@@ -40,10 +51,10 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
 
     //Récupérer le numéro
-    //String? numero=await _repository.recupererNumero();
-    String numero="0575006528";
+    String? numero=await _repository.recupererNumero();
+    //String numero="0576267719";
     // Validation
-    if (numero.length < 10) {
+    if (numero!.length < 10) {
       _errorMessage = 'Veuillez vérifier votre numéro';
       _isLoading = false;
       notifyListeners();
@@ -59,7 +70,8 @@ class AuthViewModel extends ChangeNotifier {
     try {
       _session = (await _repository.Connexion(numero, codePin)) as Session?;
       if (_session?.jwt != null) {
-        await _repository.secureJwt(_session!.jwt!);
+        await _repository.secureJwt(_session!.jwt);
+        await _repository.sauvegarderNumero(numero);
       }
     } catch (e) {
       _errorMessage = 'Connexion échouée, vérifiez vos informations.';
@@ -69,7 +81,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> inscription(String nom, String prenom, String numero, String codePin, String typeUtilisateur, String assurance, String adresse) async {
+  Future<void> inscription(String nom, String prenom, String numero, String codePin, String typeUtilisateur, String assurance, String adresse,String villeUtilisateur) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -101,11 +113,12 @@ class AuthViewModel extends ChangeNotifier {
     }
 
     try {
-      _session = (await _repository.Inscription(nom, prenom, numero, codePin, typeUtilisateur, assurance, adresse)) as Session?;
+      _session = (await _repository.Inscription(nom, prenom, numero, codePin, typeUtilisateur, assurance, adresse,villeUtilisateur)) as Session?;
       if (_session?.jwt != null) {
-        await _repository.secureJwt(_session!.jwt!);
+        await _repository.secureJwt(_session!.jwt);
         await _repository.sauvegarderNumero(numero);
       }
+
     } catch (e) {
       _errorMessage = 'Inscription échouée, veuillez réessayer.';
     } finally {

@@ -1,6 +1,7 @@
 import 'package:assurappci/Screens/Auth/Connexion.dart';
 import 'package:assurappci/Screens/Auth/Inscription.dart';
-import 'package:assurappci/Screens/General/Accueil.dart';
+import 'package:assurappci/Screens/General/Dashboard.dart';
+import 'package:assurappci/Screens/Pharmacie/DashboardGerant.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -27,9 +28,15 @@ class _SplashscreenState extends State<Splashscreen> {
 
     // La View navigue en fonction du résultat
     if (context.read<AuthViewModel>().estConnecte) {
-      Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => Accueil())
-      );
+      if(context.read<AuthViewModel>().session?.typeUtilisateur=="Gestionnaire de pharmacie"){
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => DashboardGerant())
+        );
+      }else{
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => Dashboard())
+        );
+      }
     } else {
       if(context.read<AuthViewModel>().numeroSauvegarde != null){
         Navigator.pushReplacement(context,

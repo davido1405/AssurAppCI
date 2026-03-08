@@ -1,8 +1,11 @@
 import 'package:assurappci/Models/Pharmacie.dart';
 import 'package:assurappci/Screens/General/Carte.dart';
+import 'package:assurappci/ViewModels/AuthViewModel.dart';
+import 'package:assurappci/ViewModels/NewsletterViewModel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class Detailspharmacie extends StatefulWidget {
   final Pharmacie pharmacie;
@@ -13,6 +16,35 @@ class Detailspharmacie extends StatefulWidget {
 }
 
 class _DetailspharmacieState extends State<Detailspharmacie> {
+
+  Future<void>sabonner()async{
+    final sabonne=await context.read<Newsletterviewmodel>();
+    try{
+      sabonne.sabonner(widget.pharmacie.codePharmacie,context.read<AuthViewModel>().session!.codeUtilisateur);
+
+      if(sabonne.errorMessage==null){
+        return showDialog(context: context, builder: (BuildContext context){
+          return AlertDialog(title: Text("Satut abonnement"),
+          content: Text("Abonnement éffectué avec succès !"),actions: [
+            TextButton(onPressed: (){
+              Navigator.of(context).pop();
+            }, child: Text("Compris"))
+            ],);
+        });
+      }else{
+        return showDialog(context: context, builder: (BuildContext context){
+          return AlertDialog(title: Text("Satut abonnement"),
+            content: Text("${sabonne.errorMessage}"),actions: [
+              TextButton(onPressed: (){
+                Navigator.of(context).pop();
+              }, child: Text("Compris"))
+            ],);
+        });
+      }
+    }catch(e){
+      print(e);
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,7 +172,11 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                         },
                           child: cardAction("Itinéraire", Icon(CupertinoIcons.paperplane,color: Colors.orange,size: 40.r,), Colors.orangeAccent)),
                       SizedBox(width: 10.w,),
-                      cardAction("S'abonner", Icon(CupertinoIcons.bell,color: Colors.blue,size: 40.r,), Colors.grey),
+                      GestureDetector(
+                        onTap: ()async{
+                          sabonner();
+                        },
+                          child: cardAction("S'abonner", Icon(Icons.notification_add_outlined,color: Colors.blue,size: 40.r,), Colors.grey)),
 
                     ],
                   ),

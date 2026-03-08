@@ -8,11 +8,10 @@ class Session {
   late String typeUtilisateur;
   late String nomAssuranceUtilisateur;
   late String adresseUtilisateurFournit;
+  late String villeUtilisateur;
+  late String jwt;
 
-
-  String? jwt;
-
-  Session({required this.codeUtilisateur,required this.nomUtilisateur,required this.prenomUtilisateur,required this.numeroUtilisateur,required this.typeUtilisateur,required this.nomAssuranceUtilisateur,required this.adresseUtilisateurFournit,required this.jwt});
+  Session({required this.codeUtilisateur,required this.nomUtilisateur,required this.prenomUtilisateur,required this.numeroUtilisateur,required this.typeUtilisateur,required this.nomAssuranceUtilisateur,required this.adresseUtilisateurFournit,required this.villeUtilisateur,required this.jwt});
   factory Session.fromJson(Map<String, dynamic> json) {
     return Session(
       codeUtilisateur: json['code_utilisateur'],
@@ -22,6 +21,7 @@ class Session {
       typeUtilisateur: json['type_utilisateur'],      // ✅
       nomAssuranceUtilisateur: json['assurance_utilisateur'], // ✅
       adresseUtilisateurFournit: json['adresse_utilisateur'], // ✅
+      villeUtilisateur: json['ville_utilisateur'],
       jwt: json['jwt_tokens'],                        // ✅
     );
   }

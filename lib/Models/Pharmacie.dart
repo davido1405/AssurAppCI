@@ -8,11 +8,18 @@ class Pharmacie {
   late String emailPharmacie;
   late double longitude;
   late double latitude;
+  late String horrairesOuverture;
   late String adresseFournit;
   late String libelleStatut;
   late List<String> assuranceAcceptees;
+  late String villePharmacie;
+  String? distance;
 
-  Pharmacie({required this.codePharmacie,required this.nomPharmacie,required this.photoPharmacie,required this.numeroPharmacie,required this.emailPharmacie,required this.longitude,required this.latitude,required this.adresseFournit,required this.libelleStatut,required this.assuranceAcceptees});
+
+  Pharmacie({required this.codePharmacie, required this.nomPharmacie, required this.photoPharmacie,
+    required this.numeroPharmacie, required this.emailPharmacie, required this.longitude, required this.latitude,
+    required this.horrairesOuverture, required this.adresseFournit, required this.libelleStatut,
+    required this.assuranceAcceptees, required this.villePharmacie, this.distance});
 
   factory Pharmacie.fromJson(Map<String, dynamic> json) {
     return Pharmacie(
@@ -28,6 +35,9 @@ class Pharmacie {
       assuranceAcceptees: json['assurances_acceptees'] != null
           ? json['assurances_acceptees'].toString().split(',').map((e) => e.trim()).toList()
           : [], // ← si null retourne une liste vide
+      villePharmacie: json['nom_ville']??'',
+      distance: json['distance']??'',
+      horrairesOuverture: json['horraires_ouverture'] ?? ''
     );
   }
 }

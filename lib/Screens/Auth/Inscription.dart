@@ -1,9 +1,13 @@
 import 'package:assurappci/Models/Assurances.dart';
+import 'package:assurappci/Models/TempSession.dart';
 import 'package:assurappci/Screens/Auth/Connexion.dart';
+import 'package:assurappci/Screens/Auth/DefinirCodePin.dart';
 import 'package:assurappci/ViewModels/AssuranceViewModel.dart';
+import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Inscription extends StatefulWidget {
   const Inscription({super.key});
@@ -26,8 +30,9 @@ class _InscriptionState extends State<Inscription> {
   TextEditingController nom=TextEditingController();
   TextEditingController prenom=TextEditingController();
   TextEditingController numero=TextEditingController();
-  TextEditingController assurances=TextEditingController();
   TextEditingController adresse=TextEditingController();
+
+  TextEditingController ville=TextEditingController();
 
   bool gestionnairePharmacie=false;
 
@@ -165,7 +170,25 @@ class _InscriptionState extends State<Inscription> {
                 });
               }),
 
-              SizedBox(height: 10.h,),Text("Adresse"),
+              SizedBox(height: 10.h,),
+              TextField(
+                controller: ville,
+                keyboardType: TextInputType.text,
+                decoration: InputDecoration(
+                  hint: Text("Ville de résidence"),
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: BorderSide(color: Colors.white)
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: BorderSide(color: Colors.grey)
+                  ),
+                ),
+              ),SizedBox(height: 10.h,),
+              Text("Adresse"),
               SizedBox(height: 10.h,),
               TextField(
                 controller: adresse,
@@ -194,6 +217,9 @@ class _InscriptionState extends State<Inscription> {
             setState(() {
               gestionnairePharmacie= nouvelleValeur!;
             });
+            if(gestionnairePharmacie){
+              print("Gestionnaire de pharmacie");
+            }
           }
         },controlAffinity:ListTileControlAffinity.leading),
 
@@ -204,7 +230,12 @@ class _InscriptionState extends State<Inscription> {
           child: Row(
             children: [
               Expanded(
-                child: ElevatedButton(onPressed: (){},style: ElevatedButton.styleFrom(
+                child: ElevatedButton(onPressed: ()async{
+                  if(!(nom.text.isEmpty || prenom.text.isEmpty|| numero.text.isEmpty|| ville.text.isEmpty|| adresse.text.isEmpty)){
+                    final tempSession=Tempsession(nom: nom.text, prenom: prenom.text, numero: numero.text, assurance: _typeChoisi??'Aucune assurance', ville: ville.text, adresse: adresse.text, type_utilisateur: gestionnairePharmacie==true?"Gestionnaire de pharmacie":"Utilisateur classique");
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=>Definircodepin(tempsession: tempSession,)));
+                  }
+                },style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepOrangeAccent,
                 ), child: Text("S'inscrire",style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,letterSpacing: 2,fontSize: 15.sp),),),
               ),

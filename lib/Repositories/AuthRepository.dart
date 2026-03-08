@@ -9,8 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Authrepository {
 
   //S'inscrir
-  Future<Session?> Inscription(String nomUtilisateur, String prenomUtilisateur ,String numeroUtilisateur ,String codePinUtilisateur, String type_utilisateur, String assuranceUtilisateur, String adresseUtilisateur) async {
-    final url=Uri.parse("/api/utilisateur/inscription");
+  Future<Session?> Inscription(String nomUtilisateur, String prenomUtilisateur ,String numeroUtilisateur ,String codePinUtilisateur, String type_utilisateur, String assuranceUtilisateur, String adresseUtilisateur,String villeUtilisateur) async {
+    final url=Uri.parse("http://10.0.2.2:4000/api/utilisateur/inscription");
     final reponse=await post(url,headers: {"content-Type":"application/json"},body: jsonEncode(
         {
           "nomUtilisateur": nomUtilisateur,
@@ -19,7 +19,8 @@ class Authrepository {
           "codePinUtilisateur": codePinUtilisateur,
           "type_utilisateur": type_utilisateur,
           "assuranceUtilisateur": assuranceUtilisateur,
-          "adresseUtilisateur": adresseUtilisateur
+          "adresseUtilisateur": adresseUtilisateur,
+          "ville_utilisateur":villeUtilisateur
         }));
     if(reponse.statusCode==200){
       final Map<String,dynamic>corpsReponse=jsonDecode(reponse.body);
@@ -32,7 +33,7 @@ class Authrepository {
   //Se connecter
   Future<Session?> Connexion(String numero,String codePine) async{
     final url=Uri.parse("http://10.0.2.2:4000/api/utilisateur/connexion");
-    final reponse=await http.post(url,headers: {'Content-Type':'application/json'},body: jsonEncode({
+    final reponse=await http.post(url,headers: {"Content-Type":"application/json"},body: jsonEncode({
       "numeroUtilisateur":numero,
       "codePinUtilisateur":codePine
     }));
@@ -58,9 +59,23 @@ class Authrepository {
           "codeUtilisateur":codeUtilisateur
         }));
     if(reponse.statusCode==200){
-      final Map<String,dynamic>corpsReponse=jsonDecode(reponse.body);
-      Session profilUtilisateur=Session.fromJson(corpsReponse['data']);
-      return profilUtilisateur;
+      final Map<String, dynamic> corpsReponse = jsonDecode(reponse.body);
+
+      // ✅ Vérifier success ET data
+      if (corpsReponse['success'] == true && corpsReponse['data'] != null) {
+        // ✅ Vérifier que data est un Map
+        if (corpsReponse['data'] is Map<String, dynamic>) {
+          Session profilUtilisateur = Session.fromJson(corpsReponse['data']);
+          return profilUtilisateur;
+        } else {
+          print('❌ data n\'est pas un Map: ${corpsReponse['data']}');
+          return null;
+        }
+      } else {
+        print('❌ Réponse invalide: ${corpsReponse['message']}');
+        return null;
+      }
+
     }
   }
 

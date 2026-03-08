@@ -123,6 +123,7 @@ class Userprofil extends StatelessWidget {
                   ],
                 ),
               ),
+              SizedBox(height: 15.h,),
 
               // Liste des actions
               Container(
@@ -154,35 +155,7 @@ class Userprofil extends StatelessWidget {
                   separatorBuilder: (context, index) => Divider(color: Colors.grey[200], thickness: 1),
                 ),
               ),
-
               SizedBox(height: 15.h),
-
-              if(session?.typeUtilisateur=="Gestionnaire de pharmacie")
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => Profilpharmacie()),
-                    );
-                  },
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 10.w),
-                    padding: EdgeInsets.all(15.w),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12.r)
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.note_alt, color: Colors.blueAccent),
-                        SizedBox(width: 10.w),
-                        Text("Gérer profil de la pharmacie", style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold))
-                      ],
-                    ),
-                  ),
-                ),
-              SizedBox(height: 15.h),
-
               // Déconnexion
               GestureDetector(
                 onTap: () {
