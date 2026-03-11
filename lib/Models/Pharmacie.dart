@@ -11,6 +11,7 @@ class Pharmacie {
   late String horrairesOuverture;
   late String adresseFournit;
   late String libelleStatut;
+  late int statut_garde;
   late List<String> assuranceAcceptees;
   late String villePharmacie;
   String? distance;
@@ -18,7 +19,7 @@ class Pharmacie {
 
   Pharmacie({required this.codePharmacie, required this.nomPharmacie, required this.photoPharmacie,
     required this.numeroPharmacie, required this.emailPharmacie, required this.longitude, required this.latitude,
-    required this.horrairesOuverture, required this.adresseFournit, required this.libelleStatut,
+    required this.horrairesOuverture, required this.adresseFournit, required this.libelleStatut,required this.statut_garde,
     required this.assuranceAcceptees, required this.villePharmacie, this.distance});
 
   factory Pharmacie.fromJson(Map<String, dynamic> json) {
@@ -37,7 +38,7 @@ class Pharmacie {
           : [], // ← si null retourne une liste vide
       villePharmacie: json['nom_ville']??'',
       distance: json['distance']??'',
-      horrairesOuverture: json['horraires_ouverture'] ?? ''
+      horrairesOuverture: json['horraires_ouverture'] ?? '', statut_garde: json['statut_garde'] ?? 'PAS DE GARDE'
     );
   }
 }

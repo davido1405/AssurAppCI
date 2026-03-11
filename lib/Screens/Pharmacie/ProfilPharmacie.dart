@@ -1,6 +1,7 @@
 import 'dart:io' show File;
 import 'package:assurappci/Models/Assurances.dart';
 import 'package:assurappci/Models/Pharmacie.dart';
+import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
 import 'package:assurappci/ViewModels/AssuranceViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:assurappci/ViewModels/PharmacieViewModel.dart';
@@ -58,6 +59,11 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     _emailController.dispose();
     _villeController.dispose();
     super.dispose();
+  }
+
+  //Mettre à jour le statut de garde
+  Future<void>statutGarde()async{
+
   }
 
   Future<Pharmacie?> recupererProfilPharm() async {
@@ -952,7 +958,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                     ),
                     SizedBox(height: 15.h),
 
-                    assurancesSysteme.isNotEmpty
+                    context.watch<Abonnementpharmacieviewmodel>().nomForfaitActuel!="Gratuit" && assurancesSysteme.isNotEmpty
                         ? Column(
                       children: assurancesSysteme.asMap().entries.map((entry) {
                         final index = entry.key;
