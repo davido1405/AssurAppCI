@@ -1,3 +1,5 @@
+// Screens/Pharmacie/AbonnementPharmacie.dart
+
 import 'package:assurappci/Models/AbonnementPharmacie.dart';
 import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
@@ -13,19 +15,38 @@ class Abonnementpharmacie extends StatefulWidget {
 }
 
 class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
+  List<Forfait> toutForfait = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     Future.microtask(recupererDifferentsPlan);
   }
 
-  // Plan actuel (à récupérer depuis l'API plus tard)
-  String planActuel = "Standard";
-  String prixActuel = "15000 FCFA";
+  // ✅ CORRECTION 1 : Enlever setState et async/await mal placés
+  Future<void> recupererDifferentsPlan() async {
+    try {
+      print('=== CHARGEMENT FORFAITS ===');
 
-  List<Forfait>toutForfait=[];
+      final forfaits = context.read<Abonnementpharmacieviewmodel>();
+      final resultats = await forfaits.chargerForfaits();
+
+      if (mounted && resultats != null) {
+        setState(() {
+          toutForfait = resultats;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur chargement forfaits: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> souscrireForfait(
       String codeGerant,
@@ -34,10 +55,9 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
       ) async {
     print("Souscription au forfait: $nomForfait");
 
-    // Afficher un dialogue de confirmation
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) => AlertDialog(  // ✅ Renommer pour clarté
+      builder: (BuildContext dialogContext) => AlertDialog(
         title: Text('Confirmation'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -55,22 +75,21 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),  // ✅ Utiliser dialogContext
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text('Annuler'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(dialogContext);  // ✅ Fermer le dialogue de confirmation
+              Navigator.pop(dialogContext);
 
-              // ✅ Afficher un loader pendant le traitement
               BuildContext? loaderContext;
               showDialog(
                 context: context,
-                barrierDismissible: false,  // Empêche de fermer en cliquant à côté
+                barrierDismissible: false,
                 builder: (BuildContext ctx) {
-                  loaderContext = ctx;  // Sauvegarder le contexte du loader
+                  loaderContext = ctx;
                   return WillPopScope(
-                    onWillPop: () async => false,  // Empêche le retour arrière
+                    onWillPop: () async => false,
                     child: Center(
                       child: Card(
                         child: Padding(
@@ -91,22 +110,18 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
               );
 
               try {
-                // ✅ Récupérer le ViewModel
                 final souscription = context.read<Abonnementpharmacieviewmodel>();
 
-                // ✅ Appeler la méthode de souscription
                 bool resultat = await souscription.souscrireForfait(
                   codePharmacier: codeGerant,
                   nomForfait: nomForfait,
                   modePaiement: modePaiement,
                 );
 
-                // ✅ Fermer le loader
                 if (loaderContext != null && mounted) {
                   Navigator.of(loaderContext!).pop();
                 }
 
-                // ✅ Vérifier le résultat APRÈS l'appel
                 if (mounted) {
                   if (resultat && souscription.errorMessage == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -126,9 +141,7 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                       ),
                     );
 
-                    // ✅ Recharger les données de l'abonnement
                     await souscription.chargerAbonnementActif(codeGerant);
-
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -151,14 +164,11 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                     );
                   }
                 }
-
               } catch (e) {
-                // ✅ Fermer le loader en cas d'erreur
                 if (loaderContext != null && mounted) {
                   Navigator.of(loaderContext!).pop();
                 }
 
-                // ✅ Afficher l'erreur
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -189,18 +199,6 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
       ),
     );
   }
-  Future<List<Forfait>?>recupererDifferentsPlan()async{
-    Abonnementpharmacieviewmodel forfaits=context.read<Abonnementpharmacieviewmodel>();
-
-    if(forfaits.errorMessage==null){
-      if(mounted){
-        setState(() async {
-              toutForfait=(await forfaits.chargerForfaits())!;
-        });
-      }
-    }
-  }
-
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +225,6 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Informations du plan
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -241,7 +238,7 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                         ),
                         SizedBox(height: 8.h),
                         Text(
-                          context.watch<Abonnementpharmacieviewmodel>().nomForfaitActuel,
+                          context.watch<Abonnementpharmacieviewmodel>().nomForfaitActuel ?? 'Aucun',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -249,7 +246,8 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                           ),
                         ),
                         SizedBox(height: 4.h),
-                        Text("${context.watch<Abonnementpharmacieviewmodel>().prixForfaitActuel} FCFA",
+                        Text(
+                          "${context.watch<Abonnementpharmacieviewmodel>().prixForfaitActuel ?? '0'} FCFA",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -266,8 +264,6 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                         ),
                       ],
                     ),
-
-                    // Actions
                     Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -288,7 +284,6 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                         SizedBox(height: 25.h),
                         GestureDetector(
                           onTap: () {
-                            // TODO: Gérer l'abonnement
                             print("Gérer l'abonnement");
                           },
                           child: Container(
@@ -331,10 +326,60 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
             ),
 
             SizedBox(height: 16.h),
-            if(toutForfait.isEmpty)
-              CircularProgressIndicator(),
-            Column(
-              children: toutForfait.expand((forfait)=>[cardForfait(context: context, titre: forfait.nomForfait, montant: '${forfait.prix} FCFA', description: '${forfait.description}', avantageForfait: forfait.fonctionnalites.map((fonctionnalite)=>fonctionnalite.nom).toList(), estRecommande: forfait.nomForfait=='Standard'?true:false, action: ()=>souscrireForfait(context.read<AuthViewModel>().session?.codeUtilisateur as String, forfait.nomForfait, "Wave")),SizedBox(height: 15.h,)]).toList()..removeLast(),
+
+            // ✅ CORRECTION 2 : Afficher loader ou liste
+            _isLoading
+                ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.h),
+                child: CircularProgressIndicator(),
+              ),
+            )
+                : toutForfait.isEmpty
+                ? Center(
+              child: Padding(
+                padding: EdgeInsets.all(40.h),
+                child: Text(
+                  'Aucun forfait disponible',
+                  style: TextStyle(
+                    fontSize: 16.sp,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            )
+                : Column(
+              children: toutForfait
+                  .asMap()
+                  .entries
+                  .map((entry) {
+                final index = entry.key;
+                final forfait = entry.value;
+
+                return Column(
+                  children: [
+                    cardForfait(
+                      context: context,
+                      titre: forfait.nomForfait,
+                      montant: '${forfait.prix} FCFA',
+                      description: forfait.description ?? '',
+                      avantageForfait: forfait.fonctionnalites
+                          .map((f) => f.nom)
+                          .toList(),
+                      estRecommande: forfait.nomForfait == 'Standard',
+                      action: () => souscrireForfait(
+                        context.read<AuthViewModel>().session?.codeUtilisateur ?? '',
+                        forfait.nomForfait,
+                        "Wave",
+                      ),
+                    ),
+                    // ✅ Ajouter SizedBox sauf pour le dernier
+                    if (index < toutForfait.length - 1)
+                      SizedBox(height: 15.h),
+                  ],
+                );
+              })
+                  .toList(),
             ),
 
             SizedBox(height: 20.h),
@@ -345,8 +390,16 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
   }
 }
 
-// ✅ Widget cardForfait corrigé
-Widget cardForfait({required BuildContext context, required String titre, required String montant, required String description, required List<String> avantageForfait, required bool estRecommande, required VoidCallback action,}) {
+// ===== WIDGET CARD FORFAIT =====
+Widget cardForfait({
+  required BuildContext context,
+  required String titre,
+  required String montant,
+  required String description,
+  required List<String> avantageForfait,
+  required bool estRecommande,
+  required VoidCallback action,
+}) {
   return Container(
     decoration: BoxDecoration(
       border: Border.all(
@@ -366,7 +419,7 @@ Widget cardForfait({required BuildContext context, required String titre, requir
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ===== EN-TÊTE =====
+        // EN-TÊTE
         Padding(
           padding: EdgeInsets.all(20.w),
           child: Column(
@@ -422,44 +475,29 @@ Widget cardForfait({required BuildContext context, required String titre, requir
                     ),
                 ],
               ),
-
               SizedBox(height: 12.h),
-
-              // Prix
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    montant,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 28.sp,
-                      color: Colors.black87,
-                    ),
-                  ),
-                ],
+              Text(
+                montant,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 28.sp,
+                  color: Colors.black87,
+                ),
               ),
-              // Description
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    description,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ],
+              Text(
+                description,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14.sp,
+                ),
               ),
-
             ],
           ),
         ),
 
         Divider(height: 1, color: Colors.grey[200]),
 
-        // ===== AVANTAGES =====
+        // AVANTAGES
         Padding(
           padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 20.w),
           child: Column(
@@ -492,7 +530,7 @@ Widget cardForfait({required BuildContext context, required String titre, requir
           ),
         ),
 
-        // ===== BOUTON ACTION =====
+        // BOUTON
         Padding(
           padding: EdgeInsets.all(20.w),
           child: SizedBox(

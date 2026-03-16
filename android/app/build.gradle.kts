@@ -10,12 +10,13 @@ plugins {
 
 android {
     namespace = "com.assurappci.assurappci"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36 //flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -27,8 +28,8 @@ android {
         applicationId = "com.assurappci.assurappci"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = flutter.minSdkVersion //flutter.minSdkVersion
+        targetSdk = 36 //flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -40,6 +41,16 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+}
+
+dependencies {
+    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Import the BoM for the Firebase platform
+    //implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
+
+    // Add the dependency for the Firebase Authentication library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    //implementation("com.google.firebase:firebase-auth")
 }
 
 flutter {

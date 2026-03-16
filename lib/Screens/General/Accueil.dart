@@ -50,7 +50,7 @@ class _AccueilState extends State<Accueil> {
           print(ville);
           if (mounted) {
             setState(() {
-              toutesPharmacies = pharmacieViewModel.pharmacies.where((p)=>p.villePharmacie.contains(ville)).toList();
+              toutesPharmacies = pharmacieViewModel.pharmacies.where((p)=>p.villePharmacie!.contains(ville)).toList();
             });
           }
         case "assurance":
@@ -68,7 +68,7 @@ class _AccueilState extends State<Accueil> {
           if (mounted) {
             setState(() {
               toutesPharmacies = pharmacieViewModel.pharmacies
-                  .where((p) => p.adresseFournit.contains(adresse))
+                  .where((p) => p.adresseFournit!.contains(adresse))
                   .toList();
             });
           }
@@ -351,7 +351,7 @@ class _AccueilState extends State<Accueil> {
                       Icon(Icons.location_on_outlined,color: Colors.grey,),
                       FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: Text(pharmacie.adresseFournit,style: TextStyle(
+                        child: Text(pharmacie.adresseFournit!,style: TextStyle(
                             fontWeight: FontWeight.w500,
                           color: Colors.grey[500]
                         ),overflow: TextOverflow.ellipsis,),

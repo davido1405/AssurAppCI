@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Profilpharmacie extends StatefulWidget {
   const Profilpharmacie({super.key});
@@ -47,8 +48,11 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(recupererProfilPharm);
-    Future.microtask(recupererAssurance);
+    recupererEtatGarde();
+    Future.microtask(() async{
+      await recupererProfilPharm();
+      await recupererAssurance();
+    });
   }
 
   @override
@@ -61,10 +65,195 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     super.dispose();
   }
 
-  //Mettre à jour le statut de garde
-  Future<void>statutGarde()async{
+  Future<void> recupererEtatGarde() async {
+    final prefs = await SharedPreferences.getInstance();
 
+    if (mounted) {
+      setState(() {
+        // ✅ Récupérer l'état sauvegardé (par défaut false)
+        bool estDeGarde = prefs.getBool("deGarde") ?? false;
+        _selectionGarde = [estDeGarde];
+      });
+    }
   }
+
+  /// Mettre à jour le statut de garde de la pharmacie
+  Future<void> mettreStatutGarde(bool estDeGarde) async {
+    // ✅ 1. Vérifier que le profil est chargé
+    if (profilPharma == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('⚠️ Profil pharmacie non chargé'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // ✅ 2. Afficher un loader
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    estDeGarde
+                        ? 'Activation du mode garde...'
+                        : 'Désactivation du mode garde...',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      print('=== MISE À JOUR STATUT DE GARDE ===');
+      print('Code pharmacie: ${profilPharma!.codePharmacie}');
+      print('Nouveau statut: ${estDeGarde ? "DE GARDE" : "PAS DE GARDE"}');
+
+      // ✅ 3. Appeler le ViewModel
+      final pharmacieVM = context.read<PharmacieViewModel>();
+
+      final success = await pharmacieVM.mettreAJourStatutGarde(
+        profilPharma!.codePharmacie,
+        estDeGarde,
+      );
+
+      // ✅ 4. Fermer le loader
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // ✅ 5. Traiter le résultat
+      if (success) {
+        print('✅ Statut de garde mis à jour avec succès');
+
+        // Sauvegarder localement dans SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool("deGarde", estDeGarde);
+
+        // Mettre à jour l'UI locale
+        if (mounted) {
+          setState(() {
+            _selectionGarde = [estDeGarde];
+          });
+
+          // Afficher un message de succès
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(
+                    estDeGarde ? Icons.check_circle : Icons.cancel,
+                    color: Colors.white,
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      estDeGarde
+                          ? '✅ Pharmacie de garde activée\nVous êtes maintenant visible en mode garde'
+                          : '⏸️ Pharmacie de garde désactivée\nVous n\'êtes plus visible en mode garde',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: estDeGarde ? Colors.green : Colors.orange,
+              duration: Duration(seconds: 3),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } else {
+        // ✅ 6. Gérer l'échec
+        print('❌ Échec de la mise à jour');
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.error_outline, color: Colors.white),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      pharmacieVM.errorMessage ?? 'Erreur lors de la mise à jour du statut',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 4),
+              behavior: SnackBarBehavior.floating,
+              action: SnackBarAction(
+                label: 'Réessayer',
+                textColor: Colors.white,
+                onPressed: () {
+                  mettreStatutGarde(estDeGarde);
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception mettreStatutGarde: $e');
+      print('StackTrace: $stackTrace');
+
+      // ✅ 7. Fermer le loader en cas d'erreur
+      if (mounted) {
+        try {
+          Navigator.of(context).pop();
+        } catch (e) {
+          print('⚠️ Loader déjà fermé');
+        }
+
+        // Afficher l'erreur
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.white),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Erreur inattendue: $e',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red[700],
+            duration: Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+// ✅ NOUVEAU - Liste pour ToggleButtons
+  List<bool> _selectionGarde = [false]; // false = pas de garde, true = de garde
 
   Future<Pharmacie?> recupererProfilPharm() async {
     final codeUtilisateur = context.read<AuthViewModel>().session?.codeUtilisateur;
@@ -79,48 +268,60 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
         setState(() {
           profilPharma = profil.pharmacie;
 
-          // ✅ Initialiser les controllers avec les données
           if (profilPharma != null) {
+            // ✅ Initialiser les controllers
             _nomController.text = profilPharma!.nomPharmacie;
-            _villeController.text=profilPharma!.villePharmacie ?? '';
+            _villeController.text = profilPharma!.villePharmacie ?? '';
             _adresseController.text = profilPharma!.adresseFournit ?? '';
             _telephoneController.text = profilPharma!.numeroPharmacie;
             _emailController.text = profilPharma!.emailPharmacie ?? '';
 
-            // Récupérer les assurances déjà acceptées
-            if (profilPharma!.assuranceAcceptees != null) {
-              assurancesAcceptees = _parseAssurancesAcceptees(
-                  profilPharma!.assuranceAcceptees as String
+            // ✅ CORRECTION : assuranceAcceptees est déjà une List<String>
+            if (profilPharma!.assuranceAcceptees.isNotEmpty) {
+              print('=== ASSURANCES ACCEPTÉES ===');
+              print('Type: ${profilPharma!.assuranceAcceptees.runtimeType}');
+              print('Valeurs: ${profilPharma!.assuranceAcceptees}');
+
+              // ✅ Convertir les noms en IDs
+              assurancesAcceptees = _parseAssurancesAccepteesFromNames(
+                  profilPharma!.assuranceAcceptees  // ✅ Pas de cast, c'est déjà une List<String>
               );
+
+              print('IDs trouvés: $assurancesAcceptees');
             }
+
+            // ✅ Initialiser l'état de garde
+            _selectionGarde = [profilPharma!.estDeGarde];
+
+            // Sauvegarder localement
+            SharedPreferences.getInstance().then((prefs) {
+              prefs.setBool("deGarde", profilPharma!.estDeGarde);
+            });
           }
         });
       }
     }
     return profilPharma;
   }
+  /// ✅ NOUVELLE VERSION : Convertir List<String> (noms) en List<int> (IDs)
+  List<int> _parseAssurancesAccepteesFromNames(List<String> nomsAssurances) {
+    print('=== PARSING NOMS → IDs ===');
+    print('Input (noms): $nomsAssurances');
 
-  // ✅ Parse les assurances acceptées (format: "NSIA, AXA, SUNU")
-  List<int> _parseAssurancesAcceptees(String? assurances) {
-    // ✅ Ajout du ?
-    // ✅ Vérification null-safe
-    if (assurances == null || assurances.isEmpty) {
-      print('⚠️ Aucune assurance à parser');
+    if (nomsAssurances.isEmpty) {
+      print('⚠️ Liste vide');
       return [];
     }
 
-    print('=== PARSING ASSURANCES ===');
-    print('Input: $assurances');
-    print('Type: ${assurances.runtimeType}');
+    if (assurancesSysteme.isEmpty) {
+      print('⚠️ assurancesSysteme pas encore chargé');
+      return [];
+    }
 
     List<int> ids = [];
 
-    // ✅ Split par virgule
-    List<String> noms = assurances.split(', ');
-    print('Noms split: $noms');
-
-    for (String nom in noms) {
-      String nomTrimmed = nom.trim();  // ✅ Enlever les espaces
+    for (String nom in nomsAssurances) {
+      String nomTrimmed = nom.trim();
       print('Recherche assurance: "$nomTrimmed"');
 
       final assurance = assurancesSysteme.firstWhere(
@@ -134,9 +335,9 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
 
       if (assurance.idAssurance != 0) {
         ids.add(assurance.idAssurance);
-        print('✅ Assurance trouvée: ${assurance.nomAssurance} (ID: ${assurance.idAssurance})');
+        print('✅ Trouvé: ${assurance.nomAssurance} (ID: ${assurance.idAssurance})');
       } else {
-        print('⚠️ Assurance non trouvée: "$nomTrimmed"');
+        print('⚠️ Non trouvé: "$nomTrimmed"');
       }
     }
 
@@ -629,6 +830,117 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
         physics: AlwaysScrollableScrollPhysics(),
         child: Column(
           children: [
+
+            // ===== SECTION STATUT DE GARDE =====
+            // ===== SECTION STATUT DE GARDE (AVEC LA FONCTION) =====
+            Container(
+            margin: EdgeInsets.only(bottom: 20.h),
+            padding: EdgeInsets.all(16.w),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15.r),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 5,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                // Icône
+                Container(
+                  padding: EdgeInsets.all(10.w),
+                  decoration: BoxDecoration(
+                    color: _selectionGarde[0] ? Colors.blue[50]:Colors.grey[100],
+                    borderRadius: BorderRadius.circular(10.r),
+                  ),
+                  child: Icon(
+                    Icons.nights_stay_outlined,
+                    color: _selectionGarde[0] ? Colors.blue:Colors.grey[600],
+                    size: 28.sp,
+                  ),
+                ),
+
+                SizedBox(width: 16.w),
+
+                // Texte
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Pharmacie de garde",
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        _selectionGarde[0]
+                            ?"Votre pharmacie est actuellement de garde"
+                            : "Activez le mode garde pour être visible"
+                        ,
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(width: 8.w),
+
+                // ✅ ToggleButtons avec appel à mettreStatutGarde()
+                ToggleButtons(
+                  isSelected: _selectionGarde,
+
+                  // ✅ APPEL DE LA FONCTION ICI
+                  onPressed: (int index) {
+                    bool nouvelEtat = !_selectionGarde[0];
+                    mettreStatutGarde(nouvelEtat); // ✅ Appel de la fonction
+                  },
+                  borderRadius: BorderRadius.circular(10.r),
+                  selectedColor: Colors.white,
+                  fillColor: Colors.red,
+                  color: Colors.grey[600],
+                  borderColor: Colors.grey[300],
+                  selectedBorderColor: Colors.red,
+                  borderWidth: 2,
+
+                  constraints: BoxConstraints(
+                    minHeight: 40.h,
+                    minWidth: 100.w,
+                  ),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _selectionGarde[0] ? Icons.cancel:Icons.check_circle,
+                            size: 18.sp,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            _selectionGarde[0] ? "Désactivé":"Activé",
+                            style: TextStyle(
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
             // ===== SECTION PHOTO =====
             Container(
               height: 350.h,

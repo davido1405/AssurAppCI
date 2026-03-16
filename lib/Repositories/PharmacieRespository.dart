@@ -50,11 +50,49 @@ class Pharmacierespository {
     }
   }
 
+
+  /// Mettre à jour le statut de garde
+  Future<Map<String, dynamic>> mettreAJourStatutGarde(String codePharmacie, bool estDeGarde) async {
+    try {
+      print('📤 Repository: Envoi statut garde');
+      print('URL: http://10.0.2.2:4000/api/pharmacie/modifierstatutgarde');
+
+      final url = Uri.parse('http://10.0.2.2:4000/api/pharmacie/modifierstatutgarde');
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'code_pharmacie': codePharmacie,
+          'est_de_garde': estDeGarde,
+        }),
+      );
+
+      print('📥 Status code: ${response.statusCode}');
+      print('📥 Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data;
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'message': errorData['message'] ?? 'Erreur serveur',
+        };
+      }
+    } catch (e) {
+      print('❌ Exception repository: $e');
+      return {
+        'success': false,
+        'message': 'Erreur de connexion: $e',
+      };
+    }
+  }
   // ===== RECHERCHER PHARMACIE PAR POSITION =====
-  Future<List<Pharmacie>?> rechercherPharmaciePosition(
-      double latitude,
-      double longitude,
-      ) async {
+  Future<List<Pharmacie>?> rechercherPharmaciePosition(double latitude, double longitude,) async {
     try {
       final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/rechercher")
           .replace(queryParameters: {
@@ -242,7 +280,7 @@ class Pharmacierespository {
   // ===== RÉCUPÉRER PROFIL PHARMACIE =====
   Future<Pharmacie?> recupererProfilPharmacie(String codeGerant) async {
     try {
-      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/profilpharmacie");
+      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/profilPharmacie");
 
       final reponse = await http.post(
         url,

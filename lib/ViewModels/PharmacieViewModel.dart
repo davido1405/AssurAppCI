@@ -212,6 +212,40 @@ class PharmacieViewModel extends ChangeNotifier {
     }
   }
 
+
+  // ViewModels/PharmacieViewModel.dart
+
+  Future<bool> mettreAJourStatutGarde(String codePharmacie, bool estDeGarde) async {
+    _chargementEnCours = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _pharmacierespository.mettreAJourStatutGarde(
+        codePharmacie,
+        estDeGarde,
+      );
+
+      if (result['success'] == true) {
+        _chargementEnCours = false;
+        _errorMessage = null;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'] ?? 'Erreur lors de la mise à jour';
+        _chargementEnCours = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Erreur: $e';
+      _chargementEnCours = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+
   // ===== RÉINITIALISER LES ERREURS =====
   void clearError() {
     _errorMessage = null;

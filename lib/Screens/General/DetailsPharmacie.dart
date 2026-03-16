@@ -237,7 +237,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                         Row(children: [
                           Icon(CupertinoIcons.mail_solid,color: Colors.blue,),
                           SizedBox(width: 15.w,),
-                          Text(widget.pharmacie.emailPharmacie,style: TextStyle(
+                          Text(widget.pharmacie.emailPharmacie!,style: TextStyle(
                               color: Colors.blue,
                               fontWeight: FontWeight.bold,
                               fontSize: 15.sp
