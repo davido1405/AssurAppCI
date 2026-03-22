@@ -27,7 +27,7 @@ class NotificationService {
     );
 
     await _notificationsPlugin.initialize(
-      settings: initializationSettings,
+      settings: initializationSettings, // ✅ Correction
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         print('📱 Notification cliquée');
         print('Payload: ${response.payload}');
@@ -95,12 +95,16 @@ class NotificationService {
         iOS: iosPlatformChannelSpecifics,
       );
 
+      // ✅ CORRECTION : Paramètres manquants
       await _notificationsPlugin.show(
         id: id,
+        title:title,
+        body: body,
+        notificationDetails: platformChannelSpecifics,
+        payload: payload,
       );
 
       print('✅ Notification affichée: $title');
-
     } catch (e) {
       print('❌ Erreur affichage notification: $e');
     }
@@ -120,10 +124,16 @@ class NotificationService {
 
         switch (type) {
           case 'annonce':
-            print('→ Naviguer vers pharmacie');
+            print('→ Naviguer vers annonces');
+            // TODO: Implémenter navigation
             break;
           case 'newsletter':
             print('→ Naviguer vers newsletters');
+            // TODO: Implémenter navigation
+            break;
+          case 'garde':
+            print('→ Notification de garde');
+            // TODO: Implémenter navigation
             break;
           default:
             print('→ Type non géré: $type');
@@ -131,7 +141,6 @@ class NotificationService {
       } catch (e) {
         print('Payload non-JSON: $payload');
       }
-
     } catch (e) {
       print('❌ Erreur handling notification: $e');
     }
@@ -139,7 +148,7 @@ class NotificationService {
 
   /// Annuler une notification spécifique
   static Future<void> cancelNotification(int id) async {
-    await _notificationsPlugin.cancel(id: id);
+    await _notificationsPlugin.cancel(id:id);
   }
 
   /// Annuler toutes les notifications

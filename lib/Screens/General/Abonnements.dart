@@ -169,7 +169,7 @@ Widget cardAbonnement(Newsletter abonnement,VoidCallback action) {
                   fontWeight: FontWeight.bold,
                   fontSize: 16.sp
               )),
-              Text("Abonnement ${abonnement.statut_abonnement.toLowerCase()}", style: TextStyle(color: Colors.grey[400])),
+              Text("Abonnement ${abonnement.statutAbonnement.toLowerCase()}", style: TextStyle(color: Colors.grey[400])),
             ],
           ),
         ),
@@ -182,7 +182,7 @@ Widget cardAbonnement(Newsletter abonnement,VoidCallback action) {
             ),
             child: Padding(
               padding: EdgeInsets.all(8.0.w),
-              child: Icon(abonnement.statut_abonnement=="Actif"?Icons.notifications_off_outlined:Icons.notifications_outlined, color: Colors.grey),
+              child: Icon(abonnement.statutAbonnement=="Actif"?Icons.notifications_off_outlined:Icons.notifications_outlined, color: Colors.grey),
             ),
             ),
         ),

@@ -1,7 +1,14 @@
-// Screens/Pharmacie/Annonces.dart
+// Screens/Pharmacie/Annonce.dart
 
+import 'package:assurappci/Models/Annonce.dart';
+import 'package:assurappci/Repositories/Annonces.dart';
+import 'package:assurappci/Repositories/PharmacieRespository.dart';
+import 'package:assurappci/ViewModels/AnnoncesViewModel.dart';
+import 'package:assurappci/ViewModels/AuthViewModel.dart';
+import 'package:assurappci/ViewModels/PharmacieViewModel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class Annonces extends StatefulWidget {
   const Annonces({super.key});
@@ -11,42 +18,48 @@ class Annonces extends StatefulWidget {
 }
 
 class _AnnoncesState extends State<Annonces> {
-  // Liste des annonces (à remplacer par un appel API)
-  List<Map<String, dynamic>> annonces = [
-    {
-      'id': 1,
-      'titre': 'Promotion vitamines',
-      'description': 'Réduction de 20% sur toutes les vitamines',
-      'type': 'Promotion',
-      'date': '2024-03-08',
-      'vues': 156,
-    },
-    {
-      'id': 2,
-      'titre': 'Nouveau service',
-      'description': 'Livraison à domicile maintenant disponible',
-      'type': 'Information',
-      'date': '2024-03-05',
-      'vues': 89,
-    },
-  ];
+
+  //Liste vide d'annonces
+  List<Annonce> annonces=[];
+  int total_annonces=0;
+
+  Future<void>recupererAnnonces()async{
+
+
+    setState(() => _isLoading = true);
+
+    final auth = context.read<AuthViewModel>();
+    final annonceVM= context.read<Annoncesviewmodel>();
+
+   try{
+     await annonceVM.init(auth.session?.codeUtilisateur as String);
+     if(annonceVM.errorMessage==null){
+       if(mounted){
+         annonces=annonceVM.annonces;
+         total_annonces=annonceVM.total_annonces;
+         _isLoading = false;
+       }
+
+     }else{
+       setState(() => _isLoading = false);
+     }
+   }catch(e){
+     setState(() => _isLoading = false);
+   }finally{
+     setState(() => _isLoading = false);
+   }
+
+  }
+
 
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _chargerAnnonces();
+    Future.microtask(()async{await recupererAnnonces();});
   }
 
-  Future<void> _chargerAnnonces() async {
-    setState(() => _isLoading = true);
-
-    // TODO: Appeler l'API
-    await Future.delayed(Duration(seconds: 1));
-
-    setState(() => _isLoading = false);
-  }
 
   Future<void> creerNouvelleAnnonce() async {
     final result = await Navigator.push(
@@ -57,7 +70,7 @@ class _AnnoncesState extends State<Annonces> {
     );
 
     if (result == true) {
-      _chargerAnnonces();
+      recupererAnnonces();
     }
   }
 
@@ -81,7 +94,7 @@ class _AnnoncesState extends State<Annonces> {
             onPressed: () {
               Navigator.pop(context);
               setState(() {
-                annonces.removeWhere((a) => a['id'] == id);
+                //annonces.removeWhere((a) => a['id'] == id);
               });
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -157,7 +170,7 @@ class _AnnoncesState extends State<Annonces> {
                 : annonces.isEmpty
                 ? _buildEmptyState()
                 : RefreshIndicator(
-              onRefresh: _chargerAnnonces,
+              onRefresh: recupererAnnonces,
               child: ListView.builder(
                 itemCount: annonces.length,
                 itemBuilder: (context, index) {
@@ -217,7 +230,7 @@ class _AnnoncesState extends State<Annonces> {
     );
   }
 
-  Widget _carteAnnonce(Map<String, dynamic> annonce) {
+  Widget _carteAnnonce(Annonce annonce) {
     Color getTypeColor(String type) {
       switch (type) {
         case 'Promotion':
@@ -256,7 +269,7 @@ class _AnnoncesState extends State<Annonces> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                   decoration: BoxDecoration(
-                    color: getTypeColor(annonce['type']).withOpacity(0.1),
+                    color: getTypeColor(annonce.typeAnnonce).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20.r),
                   ),
                   child: Row(
@@ -265,13 +278,13 @@ class _AnnoncesState extends State<Annonces> {
                       Icon(
                         Icons.label,
                         size: 14.sp,
-                        color: getTypeColor(annonce['type']),
+                        color: getTypeColor(annonce.typeAnnonce),
                       ),
                       SizedBox(width: 4.w),
                       Text(
-                        annonce['type'],
+                        annonce.typeAnnonce,
                         style: TextStyle(
-                          color: getTypeColor(annonce['type']),
+                          color: getTypeColor(annonce.typeAnnonce),
                           fontWeight: FontWeight.w600,
                           fontSize: 12.sp,
                         ),
@@ -283,9 +296,9 @@ class _AnnoncesState extends State<Annonces> {
                   icon: Icon(Icons.more_vert, color: Colors.grey[600]),
                   onSelected: (value) {
                     if (value == 'modifier') {
-                      modifierAnnonce(annonce['id']);
+                      modifierAnnonce(annonce.idAnnonces);
                     } else if (value == 'supprimer') {
-                      supprimerAnnonce(annonce['id']);
+                      supprimerAnnonce(annonce.idAnnonces);
                     }
                   },
                   itemBuilder: (context) => [
@@ -321,7 +334,7 @@ class _AnnoncesState extends State<Annonces> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  annonce['titre'],
+                  annonce.titre,
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -329,7 +342,7 @@ class _AnnoncesState extends State<Annonces> {
                 ),
                 SizedBox(height: 8.h),
                 Text(
-                  annonce['description'],
+                  annonce.contenu,
                   style: TextStyle(
                     fontSize: 14.sp,
                     color: Colors.grey[700],
@@ -355,7 +368,7 @@ class _AnnoncesState extends State<Annonces> {
                     Icon(Icons.calendar_today, size: 14.sp, color: Colors.grey[600]),
                     SizedBox(width: 6.w),
                     Text(
-                      annonce['date'],
+                      annonce.datePublication.split(' ')[0],
                       style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
                     ),
                   ],
@@ -365,7 +378,7 @@ class _AnnoncesState extends State<Annonces> {
                     Icon(Icons.visibility, size: 14.sp, color: Colors.grey[600]),
                     SizedBox(width: 6.w),
                     Text(
-                      '${annonce['vues']} vues',
+                      '${annonce.nombreVue} vues',
                       style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
                     ),
                   ],

@@ -120,7 +120,7 @@ class FCMService {
     try {
       print('📤 Envoi token...');
 
-      final url = Uri.parse("$_baseUrl/utilisateur/fcm-token");
+      final url = Uri.parse("$_baseUrl/utilisateur/envoyerFCMT");
       final response = await http.put(
         url,
         headers: {'Content-Type': 'application/json'},

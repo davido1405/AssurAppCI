@@ -58,7 +58,6 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
   Widget build(BuildContext context) {
     final abonnementVM = context.watch<Abonnementpharmacieviewmodel>();
     final pharmacieVM = context.watch<PharmacieViewModel>();
-    final authVM = context.watch<AuthViewModel>();
 
     final nomPharmacie = pharmacieVM.pharmacie?.nomPharmacie ?? 'Ma Pharmacie';
     final photoPharmacie = pharmacieVM.pharmacie?.photoPharmacie;

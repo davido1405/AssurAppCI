@@ -291,11 +291,11 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
             }
 
             // ✅ Initialiser l'état de garde
-            _selectionGarde = [profilPharma!.estDeGarde];
+            _selectionGarde = [profilPharma!.estDeGarde==1?true:false];
 
             // Sauvegarder localement
             SharedPreferences.getInstance().then((prefs) {
-              prefs.setBool("deGarde", profilPharma!.estDeGarde);
+              prefs.setInt("deGarde", profilPharma!.estDeGarde);
             });
           }
         });
@@ -518,7 +518,6 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     }
   }
 
-  // Screens/Pharmacie/ProfilPharmacie.dart
 
   // Screens/Pharmacie/ProfilPharmacie.dart
 

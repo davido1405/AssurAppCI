@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 class Newsletterviewmodel extends ChangeNotifier {
   // 1. Dépendances
-  final Newsletterrepository _newsletterrepository;
+  final NewsletterRepository _newsletterrepository;
   Newsletterviewmodel(this._newsletterrepository);
 
   // 2. État
@@ -34,6 +34,7 @@ class Newsletterviewmodel extends ChangeNotifier {
   }
 
   // 5. Actions
+
   Future<void> sabonner(String codePharmacie, String codeUtilisateur) async {
     _errorMessage = null;
 

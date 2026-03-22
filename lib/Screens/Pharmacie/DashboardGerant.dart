@@ -7,6 +7,7 @@ import 'package:assurappci/Screens/Pharmacie/Annonces.dart';
 import 'package:assurappci/Screens/Pharmacie/Newsletter.dart';
 import 'package:assurappci/Screens/Pharmacie/ProfilPharmacie.dart';
 import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
+import 'package:assurappci/ViewModels/AnnoncesViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:assurappci/ViewModels/PharmacieViewModel.dart';
 import 'package:assurappci/constants/fonctionnalites.dart';

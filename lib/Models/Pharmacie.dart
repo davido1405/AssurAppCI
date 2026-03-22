@@ -11,7 +11,7 @@ class Pharmacie {
   final String? horrairesOuverture;
   final String? adresseFournit;
   final String? libelleStatut;
-  final bool estDeGarde; // ✅ Renommé de statut_garde en estDeGarde
+  final int estDeGarde; // ✅ Renommé de statut_garde en estDeGarde
   final List<String> assuranceAcceptees;
   final String? villePharmacie;
   final String? distance;
@@ -58,7 +58,7 @@ class Pharmacie {
       distance: json['distance']?.toString(),
 
       // ✅ Parse statut de garde de manière robuste
-      estDeGarde: _parseBool(json['statut_garde'] ?? json['est_de_garde']),
+      estDeGarde: (json['statut_garde'] ?? json['est_de_garde']),
 
       // ✅ Parse date de mise à jour
       derniereMajGarde: _parseDateTime(json['derniere_maj_garde']),
@@ -152,7 +152,7 @@ class Pharmacie {
       'ville_pharmacie': villePharmacie,
       'distance': distance,
       'est_de_garde': estDeGarde,
-      'statut_garde': estDeGarde ? 1 : 0, // Pour compatibilité backend
+      'statut_garde': estDeGarde==1 ? true : false, // Pour compatibilité backend
       'derniere_maj_garde': derniereMajGarde?.toIso8601String(),
     };
   }
@@ -169,7 +169,7 @@ class Pharmacie {
     String? horrairesOuverture,
     String? adresseFournit,
     String? libelleStatut,
-    bool? estDeGarde,
+    int? estDeGarde,
     List<String>? assuranceAcceptees,
     String? villePharmacie,
     String? distance,

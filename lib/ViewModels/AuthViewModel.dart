@@ -55,7 +55,7 @@ class AuthViewModel extends ChangeNotifier {
 
     //Récupérer le numéro
     //String? numero=await _repository.recupererNumero();
-    String numero="0565006528";
+    String numero="0140373185";
 
     // Validation
     if (numero.length < 10) {
