@@ -1,3 +1,4 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Screens/Auth/Inscription.dart';
 import 'package:assurappci/Screens/Auth/RecoverPassword.dart';
 import 'package:assurappci/Screens/General/Accueil.dart';
@@ -44,7 +45,7 @@ class _ConnexionState extends State<Connexion> {
   Widget build(BuildContext context) {
     final authViewModel = context.watch<AuthViewModel>();
     return Scaffold(
-      backgroundColor: Colors.grey[300],
+      backgroundColor: Couleurs.lightGreen,
       body: SafeArea(child: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         physics: ScrollPhysics(),
@@ -88,6 +89,11 @@ class _ConnexionState extends State<Connexion> {
                     Padding(
                       padding: EdgeInsets.all(10.w),
                       child: Pinput(
+                        disabledPinTheme: PinTheme(
+                          decoration: BoxDecoration(
+                            color: Couleurs.lightGreen,
+                          )
+                        ),
                         controller: _codePinController,
                         length: 6,),
                     ),
@@ -100,7 +106,7 @@ class _ConnexionState extends State<Connexion> {
                             Navigator.push(context, MaterialPageRoute(builder: (context)=>Recoverpassword()));
                           },
                           child: Text("Pin oublié?",style: TextStyle(
-                        color: Colors.blue,
+                        color: Couleurs.darkGreen,
                         fontWeight: FontWeight.bold,
                         fontSize: 20.sp
                       ),),)],),
@@ -113,7 +119,7 @@ class _ConnexionState extends State<Connexion> {
                             // Affiche un loader pendant la connexion
                             onPressed: authViewModel.isLoading ? null : _seConnecter,
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepOrangeAccent
+                                backgroundColor: Couleurs.darkGreen
                             ),
                             child: authViewModel.isLoading
                                 ? CircularProgressIndicator(color: Colors.white)
@@ -145,7 +151,7 @@ class _ConnexionState extends State<Connexion> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [Text("Pas encore de compte? ",style: TextStyle(fontSize: 20.sp,color: Colors.grey[400])),GestureDetector(onTap: (){
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>Inscription()));
-                    },child: Text("S'inscrire",style: TextStyle(color: Colors.deepOrangeAccent,fontWeight: FontWeight.bold,fontSize: 20.sp),),)],
+                    },child: Text("S'inscrire",style: TextStyle(color: Couleurs.darkGreen,fontWeight: FontWeight.bold,fontSize: 20.sp),),)],
                   ),
                 ),
               ),

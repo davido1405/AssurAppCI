@@ -19,8 +19,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart' as fs;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' as mb;
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
@@ -45,7 +45,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> setup() async {
   await dotenv.load(fileName: ".env");
-  MapboxOptions.setAccessToken(dotenv.env["MAPBOX_ACCESS_TOKEN"]!);
+  mb.MapboxOptions.setAccessToken(dotenv.env["MAPBOX_ACCESS_TOKEN"]!);
 }
 
 Future<void> main() async {
@@ -72,8 +72,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: ScreenUtil.defaultSize,
+    return fs.ScreenUtilInit(
+      designSize:const Size(412, 915),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {

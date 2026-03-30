@@ -12,7 +12,7 @@ class NotificationsRepository {
     try {
       final url = Uri.parse("$baseUrl/notifications?code_utilisateur=$code_utilisateur");
 
-      print('=== RÉCUPÉRATION NOTIFICATIONS ===');
+      print('=== DECOMPTE NOTIFICATIONS ===');
       print('URL: $url');
 
       final result = await http.get(
@@ -60,7 +60,9 @@ class NotificationsRepository {
 
         if (corpsReponse['success'] == true && corpsReponse['data'] != null) {
           List<dynamic> donnees = corpsReponse['data'];
-          return donnees.map((d) => Notifications.fromJson(d)).toList();
+          List<Notifications>notifications= donnees.map((d) => Notifications.fromJson(d)).toList();
+          print(notifications);
+          return notifications.toList();
         }
       }
 

@@ -1,6 +1,8 @@
 import 'dart:io' show File;
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Models/Assurances.dart';
 import 'package:assurappci/Models/Pharmacie.dart';
+import 'package:assurappci/Screens/General/DetailsPharmacie.dart';
 import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
 import 'package:assurappci/ViewModels/AssuranceViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
@@ -8,6 +10,7 @@ import 'package:assurappci/ViewModels/PharmacieViewModel.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,9 +24,16 @@ class Profilpharmacie extends StatefulWidget {
 
 class _ProfilpharmacieState extends State<Profilpharmacie> {
   Pharmacie? profilPharma;
-  TimeOfDay heureOuverture = TimeOfDay.now();
-  TimeOfDay heureFermeture = TimeOfDay.now();
+  TimeOfDay heureOuvertureEnsemaine = TimeOfDay.now();
+  TimeOfDay heureFermetureEnsemaine = TimeOfDay.now();
 
+  //Samedi
+  TimeOfDay heureOuvertureSamedi = TimeOfDay.now();
+  TimeOfDay heureFermetureSamedi = TimeOfDay.now();
+
+  //Dimanche
+  TimeOfDay heureOuvertureDimanche = TimeOfDay.now();
+  TimeOfDay heureFermetureDimanche = TimeOfDay.now();
 
   List<Assurances> assurancesSysteme = [];
   final ImagePicker _imagePicker = ImagePicker();
@@ -31,27 +41,87 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
   // ✅ État pour la photo
   File? _photoSelectionnee;
   bool _uploadingPhoto = false;
+  String? lat;
+  String? long;
 
   // Controllers pour les champs
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _adresseController = TextEditingController();
   final TextEditingController _telephoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _villeController=TextEditingController();
+  final TextEditingController _villeController = TextEditingController();
 
   // Map pour stocker l'état de chaque checkbox
   Map<int, bool> assurancesSelectionnees = {};
   List<int> assurancesAcceptees = [];
 
-  late String horraires='${heureOuverture}-${heureFermeture}';
+  bool ouvertDimanche = false;
+
+  Future<void> ouvreDimanche() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      prefs.setBool("ouvertDimanche", ouvertDimanche);
+    }
+  }
+
+  Future<void> etatOuvertDimanche() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() async {
+        ouvertDimanche = (await prefs.getBool("ouvertDimanche")) ?? false;
+      });
+    }
+  }
+
+
+  //Récupérer position de l'utilisateur
+  Future<void> _getPosition() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error(
+        'Veuillez autoriter la localisation pour cette application',
+      );
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error("Localisation non autorisé");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+        "Localisation n'est pas autorisé. Nous ne pouvons pas accéder à votre position",
+      );
+    }
+    Position position = await Geolocator.getCurrentPosition();
+
+    if (mounted) {
+      setState(() {
+        lat = position.latitude.toString();
+        long = position.longitude.toString();
+      });
+      print(lat);
+      print(long);
+    }
+  }
+
+  String? horaireEnsemaine;
+  String? horairesSamedi;
+  String? horairesDimanche;
 
   @override
   void initState() {
     super.initState();
     recupererEtatGarde();
-    Future.microtask(() async{
+    Future.microtask(() async {
       await recupererProfilPharm();
       await recupererAssurance();
+      await etatOuvertDimanche();
+      await _getPosition();
     });
   }
 
@@ -196,7 +266,8 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      pharmacieVM.errorMessage ?? 'Erreur lors de la mise à jour du statut',
+                      pharmacieVM.errorMessage ??
+                          'Erreur lors de la mise à jour du statut',
                       style: TextStyle(fontSize: 14),
                     ),
                   ),
@@ -252,11 +323,14 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     }
   }
 
-// ✅ NOUVEAU - Liste pour ToggleButtons
+  // ✅ NOUVEAU - Liste pour ToggleButtons
   List<bool> _selectionGarde = [false]; // false = pas de garde, true = de garde
 
   Future<Pharmacie?> recupererProfilPharm() async {
-    final codeUtilisateur = context.read<AuthViewModel>().session?.codeUtilisateur;
+    final codeUtilisateur = context
+        .read<AuthViewModel>()
+        .session
+        ?.codeUtilisateur;
 
     if (codeUtilisateur == null) return null;
 
@@ -284,14 +358,15 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
 
               // ✅ Convertir les noms en IDs
               assurancesAcceptees = _parseAssurancesAccepteesFromNames(
-                  profilPharma!.assuranceAcceptees  // ✅ Pas de cast, c'est déjà une List<String>
+                profilPharma!
+                    .assuranceAcceptees, // ✅ Pas de cast, c'est déjà une List<String>
               );
 
               print('IDs trouvés: $assurancesAcceptees');
             }
 
             // ✅ Initialiser l'état de garde
-            _selectionGarde = [profilPharma!.estDeGarde==1?true:false];
+            _selectionGarde = [profilPharma!.estDeGarde == 1 ? true : false];
 
             // Sauvegarder localement
             SharedPreferences.getInstance().then((prefs) {
@@ -303,6 +378,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     }
     return profilPharma;
   }
+
   /// ✅ NOUVELLE VERSION : Convertir List<String> (noms) en List<int> (IDs)
   List<int> _parseAssurancesAccepteesFromNames(List<String> nomsAssurances) {
     print('=== PARSING NOMS → IDs ===');
@@ -325,17 +401,16 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
       print('Recherche assurance: "$nomTrimmed"');
 
       final assurance = assurancesSysteme.firstWhere(
-            (a) => a.nomAssurance.toLowerCase() == nomTrimmed.toLowerCase(),
-        orElse: () => Assurances(
-          idAssurance: 0,
-          nomAssurance: '',
-          statutAssurance: 0,
-        ),
+        (a) => a.nomAssurance.toLowerCase() == nomTrimmed.toLowerCase(),
+        orElse: () =>
+            Assurances(idAssurance: 0, nomAssurance: '', statutAssurance: 0),
       );
 
       if (assurance.idAssurance != 0) {
         ids.add(assurance.idAssurance);
-        print('✅ Trouvé: ${assurance.nomAssurance} (ID: ${assurance.idAssurance})');
+        print(
+          '✅ Trouvé: ${assurance.nomAssurance} (ID: ${assurance.idAssurance})',
+        );
       } else {
         print('⚠️ Non trouvé: "$nomTrimmed"');
       }
@@ -356,8 +431,8 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
 
           // ✅ Initialiser l'état des checkboxes
           for (var assurance in assurancesSysteme) {
-            assurancesSelectionnees[assurance.idAssurance] =
-                assurancesAcceptees.contains(assurance.idAssurance);
+            assurancesSelectionnees[assurance.idAssurance] = assurancesAcceptees
+                .contains(assurance.idAssurance);
           }
         });
       }
@@ -455,9 +530,9 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     }
 
     if (profilPharma == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profil pharmacie non chargé')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Profil pharmacie non chargé')));
       return;
     }
 
@@ -503,10 +578,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -518,14 +590,13 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     }
   }
 
-
   // Screens/Pharmacie/ProfilPharmacie.dart
 
   Future<void> enregistrerModifications() async {
     if (profilPharma == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Profil pharmacie non chargé')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Profil pharmacie non chargé')));
       return;
     }
 
@@ -565,7 +636,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
           try {
             // ✅ Utiliser firstWhere avec gestion d'erreur
             final assurance = assurancesSysteme.firstWhere(
-                  (a) => a.idAssurance == id,
+              (a) => a.idAssurance == id,
               orElse: () => Assurances(
                 idAssurance: 0,
                 nomAssurance: '',
@@ -592,14 +663,23 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
       // ✅ Créer le Map avec les noms d'assurances (pas les IDs)
       final modifications = {
         'nom_pharmacie': _nomController.text,
-        'ville_pharmacie': _villeController.text.isEmpty ? 'Abidjan' : _villeController.text,
+        'ville_pharmacie': _villeController.text.isEmpty
+            ? 'Abidjan'
+            : _villeController.text,
         'adresse_fournit': _adresseController.text,
         'numeros_pharmacie': _telephoneController.text,
         'email_pharmacie': _emailController.text,
-        'horraires_ouverture':
-        '${heureOuverture.hour.toString().padLeft(2,'0')}:${heureOuverture.minute.toString().padLeft(2,'0')} - '
-            '${heureFermeture.hour.toString().padLeft(2,'0')}:${heureFermeture.minute.toString().padLeft(2,'0')}',
-        'assurances': nomsAssurances,  // ✅ Liste de String, pas List<int>
+        'horaireEnSemaine':
+            '${heureOuvertureEnsemaine.hour.toString().padLeft(2, '0')}:${heureOuvertureEnsemaine.minute.toString().padLeft(2, '0')} - '
+            '${heureFermetureEnsemaine.hour.toString().padLeft(2, '0')}:${heureFermetureEnsemaine.minute.toString().padLeft(2, '0')}',
+        'horaireSamedi':
+            '${heureOuvertureSamedi.hour.toString().padLeft(2, '0')}:${heureOuvertureSamedi.minute.toString().padLeft(2, '0')} - '
+            '${heureFermetureSamedi.hour.toString().padLeft(2, '0')}:${heureFermetureSamedi.minute.toString().padLeft(2, '0')}',
+        'horaireDimanche': ouvertDimanche
+            ? '${heureOuvertureDimanche.hour.toString().padLeft(2, '0')}:${heureOuvertureDimanche.minute.toString().padLeft(2, '0')} - '
+                  '${heureFermetureDimanche.hour.toString().padLeft(2, '0')}:${heureFermetureDimanche.minute.toString().padLeft(2, '0')}'
+            : "Fermée",
+        'assurances': nomsAssurances, // ✅ Liste de String, pas List<int>
       };
 
       print('=== MODIFICATIONS FINALES ===');
@@ -614,9 +694,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
             dialogContext = ctx; // ✅ Sauvegarder le contexte du dialogue
             return WillPopScope(
               onWillPop: () async => false,
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
+              child: Center(child: CircularProgressIndicator()),
             );
           },
         );
@@ -685,6 +763,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
       }
     }
   }
+
   // ✅ Enregistrer le profil de la pharmacie (AJOUT)
   Future<void> ajouterPharmacie() async {
     // Validation
@@ -739,17 +818,27 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
 
       // ✅ Appeler le ViewModel avec les bons paramètres
       await pharmacieVM.ajouterPharmacie(
-        _photoSelectionnee!,  // ✅ File (pas .path)
+        _photoSelectionnee!,
+        // ✅ File (pas .path)
         gerant,
         _nomController.text,
         _telephoneController.text,
         _emailController.text,
-        null, // latitude (optionnel pour l'instant)
-        null, // longitude (optionnel pour l'instant)
-        _villeController.text.isEmpty ? '' : _villeController.text,  // ✅ Ville
+        null,
+        // latitude (optionnel pour l'instant)
+        null,
+        // longitude (optionnel pour l'instant)
+        _villeController.text.isEmpty ? '' : _villeController.text,
+        // ✅ Ville
         _adresseController.text,
-        "${heureOuverture.hour.toString().padLeft(2, '0')}:${heureOuverture.minute.toString().padLeft(2, '0')} - ${heureFermeture.hour.toString().padLeft(2, '0')}:${heureFermeture.minute.toString().padLeft(2, '0')}",
-        nomsAssurances,  // ✅ Liste de String
+
+        '${heureOuvertureEnsemaine.hour.toString().padLeft(2, '0')}:${heureOuvertureEnsemaine.minute.toString().padLeft(2, '0')} - '
+            '${heureFermetureEnsemaine.hour.toString().padLeft(2, '0')}:${heureFermetureEnsemaine.minute.toString().padLeft(2, '0')}',
+        '${heureOuvertureSamedi.hour.toString().padLeft(2, '0')}:${heureOuvertureSamedi.minute.toString().padLeft(2, '0')} - '
+            '${heureFermetureSamedi.hour.toString().padLeft(2, '0')}:${heureFermetureSamedi.minute.toString().padLeft(2, '0')}',
+        '${heureOuvertureDimanche.hour.toString().padLeft(2, '0')}:${heureOuvertureDimanche.minute.toString().padLeft(2, '0')} - '
+            '${heureFermetureDimanche.hour.toString().padLeft(2, '0')}:${heureFermetureDimanche.minute.toString().padLeft(2, '0')}',
+        nomsAssurances, // ✅ Liste de String
       );
 
       if (mounted) {
@@ -785,17 +874,15 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
         Navigator.pop(context); // Fermer le loader
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Erreur: $e'), backgroundColor: Colors.red),
         );
       }
     }
   }
 
   Widget listeChoixAssurance(Assurances assurance) {
-    final bool estCochee = assurancesSelectionnees[assurance.idAssurance] ?? false;
+    final bool estCochee =
+        assurancesSelectionnees[assurance.idAssurance] ?? false;
 
     return CheckboxListTile(
       value: estCochee,
@@ -828,124 +915,175 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
       child: SingleChildScrollView(
         physics: AlwaysScrollableScrollPhysics(),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            //Intitué de l'écran
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          child: Text(
+                            "ESPACE PROFIL",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Couleurs.accentOrange,
+                            ),
+                          ),
+                        ),
+                        FittedBox(
+                          child: Text(
+                            "🪪 Profil de votre pharmacie",
+                            style: TextStyle(
+                              fontSize: 25.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 5.h),
+                        Text(
+                          "Gardez le profil de votre pharmacie à jour pour garder vos abonnés informé(e)s.",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[600]
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
             // ===== SECTION STATUT DE GARDE =====
-            // ===== SECTION STATUT DE GARDE (AVEC LA FONCTION) =====
             Container(
-            margin: EdgeInsets.only(bottom: 20.h),
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15.r),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.3),
-                  blurRadius: 5,
-                  offset: Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                // Icône
-                Container(
-                  padding: EdgeInsets.all(10.w),
-                  decoration: BoxDecoration(
-                    color: _selectionGarde[0] ? Colors.blue[50]:Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10.r),
+              margin: EdgeInsets.only(bottom: 20.h),
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.3),
+                    blurRadius: 5,
+                    offset: Offset(0, 2),
                   ),
-                  child: Icon(
-                    Icons.nights_stay_outlined,
-                    color: _selectionGarde[0] ? Colors.blue:Colors.grey[600],
-                    size: 28.sp,
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Icône
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      color: _selectionGarde[0]
+                          ? Colors.blue[50]
+                          : Couleurs.darkGreen,
+                      borderRadius: BorderRadius.circular(10.r),
+                    ),
+                    child: Icon(
+                      Icons.nights_stay_outlined,
+                      color: _selectionGarde[0]
+                          ? Colors.blue
+                          : Couleurs.lightGreen,
+                      size: 28.sp,
+                    ),
                   ),
-                ),
 
-                SizedBox(width: 16.w),
+                  SizedBox(width: 16.w),
 
-                // Texte
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "Pharmacie de garde",
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
+                  // Texte
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Pharmacie de garde",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        _selectionGarde[0]
-                            ?"Votre pharmacie est actuellement de garde"
-                            : "Activez le mode garde pour être visible"
-                        ,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.grey[600],
+                        SizedBox(height: 4.h),
+                        Text(
+                          _selectionGarde[0]
+                              ? "Votre pharmacie est actuellement de garde"
+                              : "Activez le mode garde pour être visible",
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(width: 8.w),
+
+                  // ✅ ToggleButtons avec appel à mettreStatutGarde()
+                  ToggleButtons(
+                    isSelected: _selectionGarde,
+
+                    // ✅ APPEL DE LA FONCTION ICI
+                    onPressed: (int index) {
+                      bool nouvelEtat = !_selectionGarde[0];
+                      mettreStatutGarde(nouvelEtat); // ✅ Appel de la fonction
+                    },
+                    borderRadius: BorderRadius.circular(10.r),
+                    selectedColor: Colors.white,
+                    fillColor: Colors.grey[600],
+                    color: Colors.grey[600],
+                    borderColor: Colors.grey[300],
+                    selectedBorderColor: Colors.grey[600],
+                    borderWidth: 2,
+
+                    constraints: BoxConstraints(
+                      minHeight: 40.h,
+                      minWidth: 100.w,
+                    ),
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20.w,
+                          vertical: 8.h,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _selectionGarde[0]
+                                  ? Icons.cancel
+                                  : Icons.check_circle,
+                              size: 18.sp,
+                            ),
+                            SizedBox(width: 6.w),
+                            Text(
+                              _selectionGarde[0] ? "Désactivé" : "Activé",
+                              style: TextStyle(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                SizedBox(width: 8.w),
-
-                // ✅ ToggleButtons avec appel à mettreStatutGarde()
-                ToggleButtons(
-                  isSelected: _selectionGarde,
-
-                  // ✅ APPEL DE LA FONCTION ICI
-                  onPressed: (int index) {
-                    bool nouvelEtat = !_selectionGarde[0];
-                    mettreStatutGarde(nouvelEtat); // ✅ Appel de la fonction
-                  },
-                  borderRadius: BorderRadius.circular(10.r),
-                  selectedColor: Colors.white,
-                  fillColor: Colors.red,
-                  color: Colors.grey[600],
-                  borderColor: Colors.grey[300],
-                  selectedBorderColor: Colors.red,
-                  borderWidth: 2,
-
-                  constraints: BoxConstraints(
-                    minHeight: 40.h,
-                    minWidth: 100.w,
-                  ),
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _selectionGarde[0] ? Icons.cancel:Icons.check_circle,
-                            size: 18.sp,
-                          ),
-                          SizedBox(width: 6.w),
-                          Text(
-                            _selectionGarde[0] ? "Désactivé":"Activé",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
             // ===== SECTION PHOTO =====
             Container(
               height: 350.h,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(15.r),
+                borderRadius: BorderRadius.circular(30.r),
                 boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 5)],
               ),
               child: Padding(
@@ -954,12 +1092,22 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Photo de la pharmacie",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.photo_camera_solid,
+                          color: Couleurs.darkGreen,
+                        ),
+                        SizedBox(width: 5.w),
+                        Text(
+                          "Photo de la pharmacie",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
 
                     // ✅ Affichage de la photo
@@ -970,7 +1118,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                           width: 200.w,
                           height: 200.h,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Couleurs.lightGreen,
                             borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(color: Colors.grey[400]!),
                           ),
@@ -978,17 +1126,17 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                             borderRadius: BorderRadius.circular(12.r),
                             child: _photoSelectionnee != null
                                 ? Image.file(
-                              _photoSelectionnee!,
-                              fit: BoxFit.cover,
-                            )
+                                    _photoSelectionnee!,
+                                    fit: BoxFit.cover,
+                                  )
                                 : profilPharma?.photoPharmacie != null
                                 ? Image.network(
-                              profilPharma!.photoPharmacie!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stack) {
-                                return _buildPlaceholderPhoto();
-                              },
-                            )
+                                    profilPharma!.photoPharmacie!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stack) {
+                                      return _buildPlaceholderPhoto();
+                                    },
+                                  )
                                 : _buildPlaceholderPhoto(),
                           ),
                         ),
@@ -1001,34 +1149,46 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                         spacing: 8,
                         children: [
                           TextButton.icon(
-                            onPressed: _uploadingPhoto ? null : choisirSourcePhoto,
+                            onPressed: _uploadingPhoto
+                                ? null
+                                : choisirSourcePhoto,
                             label: Text(
                               "Choisir une photo",
                               style: TextStyle(color: Colors.white),
                             ),
-                            icon: Icon(Icons.photo_camera_outlined, color: Colors.white),
+                            icon: Icon(
+                              Icons.photo_camera_outlined,
+                              color: Colors.white,
+                            ),
                             style: TextButton.styleFrom(
-                              backgroundColor: Colors.deepOrangeAccent,
+                              backgroundColor: Couleurs.accentOrange,
                             ),
                           ),
 
                           if (_photoSelectionnee != null)
                             TextButton.icon(
-                              onPressed:(){} ,//_uploadingPhoto ? null : uploadPhotoSeule,
+                              onPressed: () {},
+                              //_uploadingPhoto ? null : uploadPhotoSeule,
                               label: Text(
                                 _uploadingPhoto ? "Upload..." : "Upload",
                                 style: TextStyle(color: Colors.white),
                               ),
                               icon: _uploadingPhoto
                                   ? SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                                  : Icon(Icons.cloud_upload, color: Colors.white),
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.cloud_upload,
+                                      color: Colors.white,
+                                    ),
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.blue,
                               ),
@@ -1047,7 +1207,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(15.r),
+                borderRadius: BorderRadius.circular(30.r),
                 boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 5)],
               ),
               child: Padding(
@@ -1055,59 +1215,86 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Informations de base",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.info_circle_fill,
+                          color: Couleurs.darkGreen,
+                        ),
+                        SizedBox(width: 5.w),
+                        Text(
+                          "Informations de base",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 25.h),
 
                     // Nom
-                    Text("Nom de la pharmacie"),
+                    Text("Nom de la pharmacie",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                      ),),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _nomController,
                       decoration: InputDecoration(
                         hintText: "Nom pharmacie",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
-                    ),SizedBox(height: 16.h),
+                    ),
+                    SizedBox(height: 16.h),
 
                     // Email
-                    Text("Ville"),
+                    Text("Ville",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                      ),),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _villeController,
                       decoration: InputDecoration(
                         hintText: "Ville pharmacie",
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
                     ),
                     SizedBox(height: 16.h),
 
                     // Adresse
-                    Text("Adresse"),
+                    Text("Adresse",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                      ),),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _adresseController,
                       decoration: InputDecoration(
                         hintText: "Adresse pharmacie",
                         prefixIcon: Icon(Icons.location_on_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
                     ),
                     SizedBox(height: 16.h),
 
                     // Téléphone
-                    Text("Téléphone"),
+                    Text("Téléphone",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                      ),),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _telephoneController,
@@ -1115,15 +1302,19 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                       decoration: InputDecoration(
                         hintText: "Contact pharmacie",
                         prefixIcon: Icon(CupertinoIcons.phone),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
                     ),
                     SizedBox(height: 16.h),
 
                     // Email
-                    Text("Email"),
+                    Text("Email",
+                      style: TextStyle(
+                        fontSize: 16.sp,
+                        fontWeight: FontWeight.w400,
+                      ),),
                     SizedBox(height: 8.h),
                     TextField(
                       controller: _emailController,
@@ -1131,11 +1322,12 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                       decoration: InputDecoration(
                         hintText: "E-mail pharmacie",
                         prefixIcon: Icon(CupertinoIcons.mail),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20.r),
-                        ),
+                        border: OutlineInputBorder(borderSide: BorderSide.none),
+                        filled: true,
+                        fillColor: Colors.grey[100],
                       ),
                     ),
+                    SizedBox(height: 10.h),
                   ],
                 ),
               ),
@@ -1155,84 +1347,269 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Horaires pharmacie",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    SizedBox(height: 25.h),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Heure d'ouverture
-                        Column(
-                          children: [
-                            Text("Heure d'ouverture"),
-                            SizedBox(height: 10.h),
-                            InkWell(
-                              onTap: () async {
-                                final time = await showTimePicker(
-                                  context: context,
-                                  initialTime: heureOuverture,
-                                );
-                                if (time != null) {
-                                  setState(() => heureOuverture = time);
-                                }
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 12.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  "${heureOuverture.hour.toString().padLeft(2, '0')}:${heureOuverture.minute.toString().padLeft(2, '0')}",
-                                  style: TextStyle(fontSize: 16.sp),
-                                ),
-                              ),
-                            ),
-                          ],
+                        Icon(
+                          CupertinoIcons.time_solid,
+                          color: Couleurs.darkGreen,
                         ),
-
-                        // Heure de fermeture
-                        Column(
-                          children: [
-                            Text("Heure de fermeture"),
-                            SizedBox(height: 10.h),
-                            InkWell(
-                              onTap: () async {
-                                final time = await showTimePicker(
-                                  context: context,
-                                  initialTime: heureFermeture,
-                                );
-                                if (time != null) {
-                                  setState(() => heureFermeture = time);
-                                }
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16.w,
-                                  vertical: 12.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  "${heureFermeture.hour.toString().padLeft(2, '0')}:${heureFermeture.minute.toString().padLeft(2, '0')}",
-                                  style: TextStyle(fontSize: 16.sp),
-                                ),
-                              ),
-                            ),
-                          ],
+                        SizedBox(width: 5.w),
+                        Text(
+                          "Horaires d'ouverture",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
+                    SizedBox(height: 25.h),
+                    //En semaine
+                    Container(
+                      decoration: BoxDecoration(color: Colors.grey[100]),
+                      child: Padding(
+                        padding: EdgeInsets.all(10.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Lundi-Vendredi",
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: heureOuvertureEnsemaine,
+                                );
+                                if (time != null) {
+                                  setState(
+                                    () => heureOuvertureEnsemaine = time,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  "${heureOuvertureEnsemaine.hour.toString().padLeft(2, '0')}:${heureOuvertureEnsemaine.minute.toString().padLeft(2, '0')}",
+                                  style: TextStyle(fontSize: 16.sp),
+                                ),
+                              ),
+                            ),
+
+                            Text("à"),
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: heureFermetureEnsemaine,
+                                );
+                                if (time != null) {
+                                  setState(
+                                    () => heureFermetureEnsemaine = time,
+                                  );
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  "${heureFermetureEnsemaine.hour.toString().padLeft(2, '0')}:${heureFermetureEnsemaine.minute.toString().padLeft(2, '0')}",
+                                  style: TextStyle(fontSize: 16.sp),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    //Samedi
+                    Container(
+                      decoration: BoxDecoration(color: Colors.grey[100]),
+                      child: Padding(
+                        padding: EdgeInsets.all(10.w),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Samedi",
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            SizedBox(width: 20.w),
+
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: heureOuvertureSamedi,
+                                );
+                                if (time != null) {
+                                  setState(() => heureOuvertureSamedi = time);
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  "${heureOuvertureSamedi.hour.toString().padLeft(2, '0')}:${heureOuvertureSamedi.minute.toString().padLeft(2, '0')}",
+                                  style: TextStyle(fontSize: 16.sp),
+                                ),
+                              ),
+                            ),
+
+                            Text("à"),
+                            InkWell(
+                              onTap: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: heureFermetureSamedi,
+                                );
+                                if (time != null) {
+                                  setState(() => heureFermetureSamedi = time);
+                                }
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 16.w,
+                                  vertical: 12.h,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(8.r),
+                                ),
+                                child: Text(
+                                  "${heureFermetureSamedi.hour.toString().padLeft(2, '0')}:${heureFermetureSamedi.minute.toString().padLeft(2, '0')}",
+                                  style: TextStyle(fontSize: 16.sp),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 15.h),
+                    //Ouvert dimanche
+                    SwitchListTile(
+                      activeThumbColor: Couleurs.darkGreen,
+                      title: Text(
+                        "Vous ouvrez les dimanche ?",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: Couleurs.accentOrange,
+                        ),
+                      ),
+                      value: ouvertDimanche,
+                      onChanged: (valeur) async {
+                        setState(() {
+                          ouvertDimanche = valeur;
+                        });
+                        await ouvreDimanche();
+                      },
+                    ),
+                    ouvertDimanche
+                        ? //Dimanche
+                          Container(
+                            decoration: BoxDecoration(color: Colors.grey[100]),
+                            child: Padding(
+                              padding: EdgeInsets.all(10.w),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Dimanche",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  SizedBox(width: 8.w),
+
+                                  InkWell(
+                                    onTap: () async {
+                                      final time = await showTimePicker(
+                                        context: context,
+                                        initialTime: heureOuvertureDimanche,
+                                      );
+                                      if (time != null) {
+                                        setState(
+                                          () => heureOuvertureDimanche = time,
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 12.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "${heureOuvertureDimanche.hour.toString().padLeft(2, '0')}:${heureOuvertureDimanche.minute.toString().padLeft(2, '0')}",
+                                        style: TextStyle(fontSize: 16.sp),
+                                      ),
+                                    ),
+                                  ),
+                                  Text("à"),
+                                  InkWell(
+                                    onTap: () async {
+                                      final time = await showTimePicker(
+                                        context: context,
+                                        initialTime: heureFermetureDimanche,
+                                      );
+                                      if (time != null) {
+                                        setState(
+                                          () => heureFermetureDimanche = time,
+                                        );
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16.w,
+                                        vertical: 12.h,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        borderRadius: BorderRadius.circular(
+                                          8.r,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        "${heureFermetureDimanche.hour.toString().padLeft(2, '0')}:${heureFermetureDimanche.minute.toString().padLeft(2, '0')}",
+                                        style: TextStyle(fontSize: 16.sp),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SizedBox(height: 0.w),
+                    SizedBox(height: 15.h),
                   ],
                 ),
               ),
@@ -1252,12 +1629,18 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Assurances acceptées",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    Row(
+                      children: [
+                        Icon(CupertinoIcons.shield_lefthalf_fill,color: Couleurs.darkGreen,),
+                        SizedBox(width: 10.w,),
+                        Text(
+                          "Assurances acceptées",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(height: 10.h),
                     Text(
@@ -1269,26 +1652,35 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                     ),
                     SizedBox(height: 15.h),
 
-                    context.watch<Abonnementpharmacieviewmodel>().nomForfaitActuel!="Gratuit" && assurancesSysteme.isNotEmpty
+                    context
+                                    .watch<Abonnementpharmacieviewmodel>()
+                                    .nomForfaitActuel !=
+                                "Gratuit" &&
+                            assurancesSysteme.isNotEmpty
                         ? Column(
-                      children: assurancesSysteme.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final assurance = entry.value;
-                        return Column(
-                          children: [
-                            listeChoixAssurance(assurance),
-                            if (index < assurancesSysteme.length - 1)
-                              Divider(color: Colors.grey[200], thickness: 1),
-                          ],
-                        );
-                      }).toList(),
-                    )
+                            children: assurancesSysteme.asMap().entries.map((
+                              entry,
+                            ) {
+                              final index = entry.key;
+                              final assurance = entry.value;
+                              return Column(
+                                children: [
+                                  listeChoixAssurance(assurance),
+                                  if (index < assurancesSysteme.length - 1)
+                                    Divider(
+                                      color: Colors.grey[200],
+                                      thickness: 1,
+                                    ),
+                                ],
+                              );
+                            }).toList(),
+                          )
                         : Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(20.h),
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
+                            child: Padding(
+                              padding: EdgeInsets.all(20.h),
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
                   ],
                 ),
               ),
@@ -1302,7 +1694,38 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                 Expanded(
                   child: TextButton.icon(
                     onPressed: () {
-                      // TODO: Aperçu
+                      if (mounted) {
+                        Pharmacie apercu = Pharmacie(
+                          codePharmacie: profilPharma?.codePharmacie ?? '',
+                          nomPharmacie:
+                              profilPharma?.nomPharmacie ?? _nomController.text,
+                          numeroPharmacie:
+                              profilPharma?.numeroPharmacie ??
+                              _telephoneController.text,
+                          estDeGarde: _selectionGarde[0] ? 1 : 0,
+                          assuranceAcceptees: [],
+                          adresseFournit: _adresseController.text,
+                          horaires_en_semaine:
+                              '${heureOuvertureEnsemaine.hour.toString().padLeft(2, '0')}:${heureOuvertureEnsemaine.minute.toString().padLeft(2, '0')} - '
+                                  '${heureFermetureEnsemaine.hour.toString().padLeft(2, '0')}:${heureFermetureEnsemaine.minute.toString().padLeft(2, '0')}' ??
+                              profilPharma?.horaires_en_semaine,
+                          horaires_samedi:
+                              '${heureOuvertureSamedi.hour.toString().padLeft(2, '0')}:${heureOuvertureSamedi.minute.toString().padLeft(2, '0')} - '
+                                  '${heureFermetureSamedi.hour.toString().padLeft(2, '0')}:${heureFermetureSamedi.minute.toString().padLeft(2, '0')}' ??
+                              profilPharma?.horaires_samedi,
+                          horaires_dimanche: ouvertDimanche
+                              ? '${heureOuvertureDimanche.hour.toString().padLeft(2, '0')}:${heureOuvertureDimanche.minute.toString().padLeft(2, '0')} - '
+                                    '${heureFermetureDimanche.hour.toString().padLeft(2, '0')}:${heureFermetureDimanche.minute.toString().padLeft(2, '0')}'
+                              : "Fermée" ?? profilPharma?.horaires_dimanche,
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                Detailspharmacie(pharmacie: apercu),
+                          ),
+                        );
+                      }
                     },
                     label: Text(
                       "Aperçu",
@@ -1310,7 +1733,7 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
                     ),
                     icon: Icon(Icons.remove_red_eye, color: Colors.white),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.deepOrangeAccent,
+                      backgroundColor: Couleurs.accentOrange,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
                   ),
@@ -1324,16 +1747,20 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
               children: [
                 Expanded(
                   child: TextButton.icon(
-                    onPressed: profilPharma!=null?() async{
-                      enregistrerModifications();
-                    }:ajouterPharmacie,
+                    onPressed: profilPharma != null
+                        ? () async {
+                            enregistrerModifications();
+                          }
+                        : ajouterPharmacie,
                     label: Text(
-                      profilPharma!=null?"Enregistrer les modifications":"Enregistrer ma pharmacie",
+                      profilPharma != null
+                          ? "Enregistrer les modifications"
+                          : "Enregistrer ma pharmacie",
                       style: TextStyle(color: Colors.white),
                     ),
                     icon: Icon(Icons.save, color: Colors.white),
                     style: TextButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Couleurs.darkGreen,
                       padding: EdgeInsets.symmetric(vertical: 12.h),
                     ),
                   ),
@@ -1350,12 +1777,9 @@ class _ProfilpharmacieState extends State<Profilpharmacie> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.photo_camera_outlined, size: 50.r, color: Colors.grey[400]),
+        Icon(CupertinoIcons.photo_fill, size: 50.r, color: Colors.grey[400]),
         SizedBox(height: 8.h),
-        Text(
-          'Ajouter une photo',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
+        Text('Ajouter une photo', style: TextStyle(color: Colors.grey[600])),
       ],
     );
   }

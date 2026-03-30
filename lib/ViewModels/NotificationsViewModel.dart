@@ -10,13 +10,13 @@ class Notificationsviewmodel extends ChangeNotifier {
 
   //Etat
 
-  List<Notification> _notification = [];
+  List<Notifications> _notification = [];
   bool _chargementEnCours = false;
   int? _nombreNotifs;
   String? _errorMessage;
 
   //Getters
-  List<Notification> get notificaitons => _notification;
+  List<Notifications> get notifications => _notification;
 
   bool get chargement => _chargementEnCours;
 
@@ -56,13 +56,17 @@ class Notificationsviewmodel extends ChangeNotifier {
 
     try {
       final notifs = await _notificationsrepository.recupererNotifications(
-        code_utilisateur,
+        code_utilisateur
       );
-      return notifs;
+      if(notifs!=null){
+        _notification=notifs;
+      }
+      return _notification;
     } catch (e, stackTrace) {
       _chargementEnCours = false;
       _errorMessage =
           "Une erreur s'est produite lors de la récupération des notifications";
+      print(stackTrace);
     } finally {
       _chargementEnCours = false;
       notifyListeners();

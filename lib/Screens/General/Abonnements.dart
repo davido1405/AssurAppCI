@@ -1,3 +1,4 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Models/Newsletter.dart';
 import 'package:assurappci/Screens/General/Abonnements.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
@@ -61,7 +62,7 @@ class _AbonnementsState extends State<Abonnements> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.grey[100],
+      color: Couleurs.lightGreen,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,12 +73,12 @@ class _AbonnementsState extends State<Abonnements> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Abonnements", style: TextStyle(
+                  Text("Centre abonnements", style: TextStyle(
                       fontSize: 25.sp,
                       fontWeight: FontWeight.bold
                   )),
-                  Text("Recevez des notifications des pharmacies suivies",
-                      style: TextStyle(color: Colors.grey[400])
+                  Text("Gérer vos abonnements aux différentes pharamcie d'un seul geste",
+                      style: TextStyle(color: Colors.grey,fontSize: 16.sp)
                   ),
                 ],
               ),
@@ -155,10 +156,10 @@ Widget cardAbonnement(Newsletter abonnement,VoidCallback action) {
         Container(
           padding: EdgeInsets.all(8.w),
           decoration: BoxDecoration(
-              color: Colors.deepOrangeAccent,
+              color: Couleurs.lightGreen,
               borderRadius: BorderRadius.circular(12.r)
           ),
-          child: Icon(Icons.notifications_outlined, color: Colors.white),
+          child: Icon(Icons.notifications, color: Couleurs.darkGreen),
         ),
         SizedBox(width: 10.w),
         Expanded(

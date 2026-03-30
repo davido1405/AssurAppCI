@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:assurappci/Models/horairesOuverture.dart';
+
 class Pharmacie {
   final String codePharmacie;
   final String nomPharmacie;
@@ -8,7 +10,9 @@ class Pharmacie {
   final String? emailPharmacie;
   final double? longitude;
   final double? latitude;
-  final String? horrairesOuverture;
+  final String? horaires_en_semaine;
+  final String? horaires_samedi;
+  final String? horaires_dimanche;
   final String? adresseFournit;
   final String? libelleStatut;
   final int estDeGarde; // ✅ Renommé de statut_garde en estDeGarde
@@ -25,7 +29,9 @@ class Pharmacie {
     this.emailPharmacie,
     this.longitude,
     this.latitude,
-    this.horrairesOuverture,
+    this.horaires_en_semaine,
+    this.horaires_samedi,
+    this.horaires_dimanche,
     this.adresseFournit,
     this.libelleStatut,
     required this.estDeGarde,
@@ -49,7 +55,11 @@ class Pharmacie {
 
       adresseFournit: json['adresse_fournit']?.toString(),
       libelleStatut: json['libelle_statut']?.toString(),
-      horrairesOuverture: json['horraires_ouverture']?.toString(),
+
+
+      horaires_en_semaine: json['horaire_semaine']??'08:30 - 21:30',
+      horaires_samedi: json['horaire_samedi']??'08:30 - 15:30',
+      horaires_dimanche: json['horaire_dimanche']??'Fermée',
 
       // ✅ Parse assurances de manière robuste
       assuranceAcceptees: _parseAssurances(json['assurances_acceptees'] ?? json['assurance_acceptees']),
@@ -117,7 +127,6 @@ class Pharmacie {
 
     return [];
   }
-
   // ✅ Méthode helper pour parser DateTime de manière sûre
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
@@ -147,7 +156,9 @@ class Pharmacie {
       'latitude': latitude,
       'adresse_fournit': adresseFournit,
       'libelle_statut': libelleStatut,
-      'horraires_ouverture': horrairesOuverture,
+      'horaires_en_semaine':horaires_en_semaine,
+      'horaires_samedi':horaires_samedi,
+      'horaires_dimanche':horaires_dimanche,
       'assurance_acceptees': assuranceAcceptees.join(', '),
       'ville_pharmacie': villePharmacie,
       'distance': distance,
@@ -158,23 +169,7 @@ class Pharmacie {
   }
 
   // ✅ Copie avec modifications
-  Pharmacie copyWith({
-    String? codePharmacie,
-    String? nomPharmacie,
-    String? photoPharmacie,
-    String? numeroPharmacie,
-    String? emailPharmacie,
-    double? longitude,
-    double? latitude,
-    String? horrairesOuverture,
-    String? adresseFournit,
-    String? libelleStatut,
-    int? estDeGarde,
-    List<String>? assuranceAcceptees,
-    String? villePharmacie,
-    String? distance,
-    DateTime? derniereMajGarde,
-  }) {
+  Pharmacie copyWith({String? codePharmacie, String? nomPharmacie, String? photoPharmacie, String? numeroPharmacie, String? emailPharmacie, double? longitude, double? latitude,  String? horaire_en_semaine, String? horaire_samedi, String? horaire_dimanche, String? adresseFournit, String? libelleStatut, int? estDeGarde, List<String>? assuranceAcceptees, String? villePharmacie, String? distance, DateTime? derniereMajGarde,}) {
     return Pharmacie(
       codePharmacie: codePharmacie ?? this.codePharmacie,
       nomPharmacie: nomPharmacie ?? this.nomPharmacie,
@@ -183,9 +178,11 @@ class Pharmacie {
       emailPharmacie: emailPharmacie ?? this.emailPharmacie,
       longitude: longitude ?? this.longitude,
       latitude: latitude ?? this.latitude,
-      horrairesOuverture: horrairesOuverture ?? this.horrairesOuverture,
       adresseFournit: adresseFournit ?? this.adresseFournit,
       libelleStatut: libelleStatut ?? this.libelleStatut,
+      horaires_en_semaine: horaire_en_semaine??this.horaires_en_semaine,
+      horaires_samedi: horaire_samedi??this.horaires_samedi,
+      horaires_dimanche: horaire_dimanche??this.horaires_dimanche,
       estDeGarde: estDeGarde ?? this.estDeGarde,
       assuranceAcceptees: assuranceAcceptees ?? this.assuranceAcceptees,
       villePharmacie: villePharmacie ?? this.villePharmacie,
@@ -196,7 +193,7 @@ class Pharmacie {
 
   @override
   String toString() {
-    return 'Pharmacie(code: $codePharmacie, nom: $nomPharmacie, ville: $villePharmacie, garde: $estDeGarde)';
+    return 'Pharmacie(code: $codePharmacie, nom: $nomPharmacie, ville: $villePharmacie, garde: $estDeGarde,horaire_semaine: $horaires_en_semaine)';
   }
 
   @override

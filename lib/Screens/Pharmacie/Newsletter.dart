@@ -1,5 +1,6 @@
 // Screens/Pharmacie/Newsletter.dart
 
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -67,6 +68,41 @@ class _NewsletterState extends State<Newsletter> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+
+          //Intitué de l'écran
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        child: Text(
+                          "📣 Envoyer information aux abonnés",
+                          style: TextStyle(
+                            fontSize: 25.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        "Gardez vos abonnés informé(e)s en envoyant des annonces chaque semaine, chaque jour c'est commme vous voulez.",
+                        style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[600]
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
           // ===== EN-TÊTE =====
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -96,7 +132,7 @@ class _NewsletterState extends State<Newsletter> {
                 icon: Icon(Icons.send, size: 20.sp),
                 label: Text('Envoyer'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purple,
+                  backgroundColor: Couleurs.darkGreen,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
                   shape: RoundedRectangleBorder(
@@ -114,7 +150,7 @@ class _NewsletterState extends State<Newsletter> {
             padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.purple[400]!, Colors.purple[600]!],
+                colors: [Couleurs.primaryGreen, Couleurs.darkGreen],
               ),
               borderRadius: BorderRadius.circular(16.r),
             ),
@@ -277,7 +313,7 @@ class _NewsletterState extends State<Newsletter> {
             SizedBox(height: 16.h),
             Row(
               children: [
-                Icon(Icons.calendar_today, size: 14.sp, color: Colors.grey[600]),
+                Icon(Icons.calendar_today, size: 14.sp, color: Couleurs.darkGreen),
                 SizedBox(width: 6.w),
                 Text(
                   newsletter['date'],
@@ -317,7 +353,7 @@ class _NewsletterState extends State<Newsletter> {
   Widget _buildNewsletterStat(IconData icon, String label, String value) {
     return Column(
       children: [
-        Icon(icon, size: 20.sp, color: Colors.purple),
+        Icon(icon, size: 20.sp, color: Couleurs.darkGreen),
         SizedBox(height: 4.h),
         Text(
           value,
@@ -388,9 +424,10 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Couleurs.lightGreen,
       appBar: AppBar(
         title: Text('Nouvelle Newsletter'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Couleurs.darkGreen,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -404,20 +441,20 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
               Container(
                 padding: EdgeInsets.all(16.w),
                 decoration: BoxDecoration(
-                  color: Colors.purple[50],
+                  color: Couleurs.darkGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12.r),
-                  border: Border.all(color: Colors.purple[200]!),
+                  border: Border.all(color: Couleurs.darkGreen),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.purple),
+                    Icon(Icons.info_outline, color: Couleurs.darkGreen),
                     SizedBox(width: 12.w),
                     Expanded(
                       child: Text(
                         'Cette newsletter sera envoyée à ${widget.nombreAbonnes} abonné(s)',
                         style: TextStyle(
                           fontSize: 14.sp,
-                          color: Colors.purple[900],
+                          color: Couleurs.darkGreen,
                         ),
                       ),
                     ),
@@ -436,6 +473,8 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
                   hintText: 'Ex: Nouveautés du mois',
                   prefixIcon: Icon(Icons.title),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                  filled: true,
+                  fillColor: Colors.white
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Veuillez entrer un titre' : null,
               ),
@@ -451,6 +490,8 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
                 decoration: InputDecoration(
                   hintText: 'Écrivez votre message...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                    filled: true,
+                    fillColor: Colors.white
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Veuillez entrer un contenu' : null,
               ),
@@ -466,8 +507,11 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        backgroundColor: Colors.grey[200]
                       ),
-                      child: Text('Annuler'),
+                      child: Text('Annuler',style: TextStyle(
+                        color: Colors.grey[600]
+                      ),),
                     ),
                   ),
                   SizedBox(width: 16.w),
@@ -486,7 +530,7 @@ class _CreerNewsletterScreenState extends State<CreerNewsletterScreen> {
                           : Icon(Icons.send),
                       label: Text(_isLoading ? 'Envoi...' : 'Envoyer'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
+                        backgroundColor: Couleurs.darkGreen,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),

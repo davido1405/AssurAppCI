@@ -1,3 +1,4 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Models/AbonnementPharmacie.dart';
 import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
@@ -70,6 +71,47 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            //Intitué de l'écran
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          child: Text(
+                            "ESPACE PHARMACIE",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Couleurs.accentOrange,
+                            ),
+                          ),
+                        ),SizedBox(height: 5.h),
+                        Text(
+                          "Bienvenu(e)",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        FittedBox(
+                          child: Text(
+                            "Mr/Mme ${context.watch<AuthViewModel>().session?.nomUtilisateur}",
+                            style: TextStyle(
+                              fontSize: 25.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
             // ===== EN-TÊTE =====
             _buildHeader(nomPharmacie, photoPharmacie),
 
@@ -119,7 +161,7 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.deepOrangeAccent, Colors.orangeAccent],
+          colors: [Couleurs.darkGreen, Couleurs.primaryGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -134,7 +176,7 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
                 ? NetworkImage(photoPharmacie)
                 : null,
             child: photoPharmacie == null
-                ? Icon(Icons.local_pharmacy, size: 30.sp, color: Colors.deepOrangeAccent)
+                ? Icon(Icons.local_pharmacy, size: 30.sp, color: Couleurs.darkGreen)
                 : null,
           ),
           SizedBox(width: 16.w),
@@ -190,7 +232,7 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.workspace_premium, color: Colors.amber, size: 24.sp),
+                  Icon(Icons.workspace_premium, color: Colors.amber, size: 25.sp),
                   SizedBox(width: 8.w),
                   Text(
                     'Forfait actuel',
@@ -244,7 +286,7 @@ class _AccueilpharmacieState extends State<Accueilpharmacie> {
               Text(
                 'Gérer votre abonnement dans Abonnement',
                 style: TextStyle(
-                  color: Colors.deepOrangeAccent,
+                  color: Couleurs.emergencyRed,
                   fontWeight: FontWeight.w600,
                 ),
               ),

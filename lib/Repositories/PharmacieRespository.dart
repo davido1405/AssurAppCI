@@ -16,7 +16,6 @@ import 'package:path/path.dart' as path;
 import 'package:assurappci/Models/Pharmacie.dart';
 
 class Pharmacierespository {
-
   // ===== INSTANCE DIO =====
   final Dio _dio = Dio(
     BaseOptions(
@@ -50,20 +49,22 @@ class Pharmacierespository {
     }
   }
 
-
   /// Mettre à jour le statut de garde
-  Future<Map<String, dynamic>> mettreAJourStatutGarde(String codePharmacie, bool estDeGarde) async {
+  Future<Map<String, dynamic>> mettreAJourStatutGarde(
+    String codePharmacie,
+    bool estDeGarde,
+  ) async {
     try {
       print('📤 Repository: Envoi statut garde');
       print('URL: http://10.0.2.2:4000/api/pharmacie/modifierstatutgarde');
 
-      final url = Uri.parse('http://10.0.2.2:4000/api/pharmacie/modifierstatutgarde');
+      final url = Uri.parse(
+        'http://10.0.2.2:4000/api/pharmacie/modifierstatutgarde',
+      );
 
       final response = await http.put(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'code_pharmacie': codePharmacie,
           'est_de_garde': estDeGarde,
@@ -85,20 +86,23 @@ class Pharmacierespository {
       }
     } catch (e) {
       print('❌ Exception repository: $e');
-      return {
-        'success': false,
-        'message': 'Erreur de connexion: $e',
-      };
+      return {'success': false, 'message': 'Erreur de connexion: $e'};
     }
   }
+
   // ===== RECHERCHER PHARMACIE PAR POSITION =====
-  Future<List<Pharmacie>?> rechercherPharmaciePosition(double latitude, double longitude,) async {
+  Future<List<Pharmacie>?> rechercherPharmaciePosition(
+    double latitude,
+    double longitude,
+  ) async {
     try {
       final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/rechercher")
-          .replace(queryParameters: {
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-      });
+          .replace(
+            queryParameters: {
+              'latitude': latitude.toString(),
+              'longitude': longitude.toString(),
+            },
+          );
 
       final reponse = await http.get(
         url,
@@ -122,10 +126,10 @@ class Pharmacierespository {
 
   // ===== RECHERCHER PHARMACIE PAR TERME =====
   Future<List<Pharmacie>?> rechercherPharmacieTerme(
-      String? terme_saisi,
-      double? latitude,
-      double? longitude,
-      ) async {
+    String? terme_saisi,
+    double? latitude,
+    double? longitude,
+  ) async {
     try {
       // Construction des query parameters
       final queryParams = <String, String>{};
@@ -141,8 +145,9 @@ class Pharmacierespository {
       }
 
       // Construction de l'URL avec les query parameters
-      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/rechercher")
-          .replace(queryParameters: queryParams);
+      final url = Uri.parse(
+        "http://10.0.2.2:4000/api/pharmacie/rechercher",
+      ).replace(queryParameters: queryParams);
 
       print('URL de recherche: $url');
 
@@ -171,11 +176,27 @@ class Pharmacierespository {
   }
 
   // ===== AJOUTER UNE PHARMACIE (HTTP) =====
-  Future<Map<String, dynamic>?> ajouterPharmacie(File? image, String codeGerant, String nomPharmacie, String numeroPharmacie, String emailPharmacie, double? latitudePharmacie, double? longitudePharmacie, String villePharmacie, String adresseFournit, String horraires, List<String> assurancesAcceptees,) async {
+  Future<Map<String, dynamic>?> ajouterPharmacie(
+    File? image,
+    String codeGerant,
+    String nomPharmacie,
+    String numeroPharmacie,
+    String emailPharmacie,
+    double? latitudePharmacie,
+    double? longitudePharmacie,
+    String villePharmacie,
+    String adresseFournit,
+    String horairesEnSemaine,
+    String horairesSamedi,
+    String horairesDimanche,
+    List<String> assurancesAcceptees,
+  ) async {
     try {
       print('=== DÉBUT AJOUT PHARMACIE ===');
 
-      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/ajouterPharmacie");
+      final url = Uri.parse(
+        "http://10.0.2.2:4000/api/pharmacie/ajouterPharmacie",
+      );
 
       // ✅ Créer la requête multipart
       var requete = http.MultipartRequest("POST", url);
@@ -187,10 +208,16 @@ class Pharmacierespository {
       requete.fields['email_pharmacie'] = emailPharmacie;
       requete.fields['ville_pharmacie'] = villePharmacie;
       requete.fields['adresse_fournit'] = adresseFournit;
-      requete.fields['horraires_ouverture'] = horraires;
-      requete.fields['latitudePharmacie'] = latitudePharmacie?.toString() ?? '0';
-      requete.fields['longitudePharmacie'] = longitudePharmacie?.toString() ?? '0';
-      requete.fields['liste_assurance_accepte'] = jsonEncode(assurancesAcceptees);
+      requete.fields['horaires_en_semaine'] = horairesEnSemaine;
+      requete.fields['horaires_samedi'] = horairesSamedi;
+      requete.fields['horaires_dimanche'] = horairesDimanche;
+      requete.fields['latitudePharmacie'] =
+          latitudePharmacie?.toString() ?? '0';
+      requete.fields['longitudePharmacie'] =
+          longitudePharmacie?.toString() ?? '0';
+      requete.fields['liste_assurance_accepte'] = jsonEncode(
+        assurancesAcceptees,
+      );
 
       print('Champs envoyés: ${requete.fields}');
 
@@ -234,7 +261,8 @@ class Pharmacierespository {
           final errorResponse = jsonDecode(response.body);
           return {
             'success': false,
-            'message': errorResponse['message'] ?? 'Erreur ${response.statusCode}',
+            'message':
+                errorResponse['message'] ?? 'Erreur ${response.statusCode}',
           };
         } catch (e) {
           return {
@@ -246,17 +274,19 @@ class Pharmacierespository {
     } catch (e, stackTrace) {
       print('❌ Exception ajouterPharmacie: $e');
       print('Stack trace: $stackTrace');
-      return {
-        'success': false,
-        'message': 'Erreur: $e',
-      };
+      return {'success': false, 'message': 'Erreur: $e'};
     }
   }
 
   // ===== AJOUTER ASSURANCES ACCEPTÉES =====
-  Future<String?> ajouterAssuranceAcceptees(String codePharmacie, List<String> assurance,) async {
+  Future<String?> ajouterAssuranceAcceptees(
+    String codePharmacie,
+    List<String> assurance,
+  ) async {
     try {
-      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/ajouterassurance");
+      final url = Uri.parse(
+        "http://10.0.2.2:4000/api/pharmacie/ajouterassurance",
+      );
 
       final reponse = await http.post(
         url,
@@ -280,7 +310,9 @@ class Pharmacierespository {
   // ===== RÉCUPÉRER PROFIL PHARMACIE =====
   Future<Pharmacie?> recupererProfilPharmacie(String codeGerant) async {
     try {
-      final url = Uri.parse("http://10.0.2.2:4000/api/pharmacie/profilPharmacie");
+      final url = Uri.parse(
+        "http://10.0.2.2:4000/api/pharmacie/profilPharmacie",
+      );
 
       final reponse = await http.post(
         url,
@@ -301,7 +333,10 @@ class Pharmacierespository {
   }
 
   // ===== UPLOAD PHOTO SEULE (DIO) =====
-  Future<Map<String, dynamic>?> uploadPhotoPharmacier(String codePharmacier, File photo_pharmacie,) async {
+  Future<Map<String, dynamic>?> uploadPhotoPharmacier(
+    String codePharmacier,
+    File photo_pharmacie,
+  ) async {
     try {
       print('=== UPLOAD PHOTO SEULE ===');
       print('Code pharmacie: $codePharmacier');
@@ -325,7 +360,6 @@ class Pharmacierespository {
 
       print('✅ Upload réussi: ${response.data}');
       return response.data as Map<String, dynamic>?;
-
     } on DioException catch (e) {
       print('❌ DioException uploadPhotoPharmacier: ${e.message}');
       if (e.response != null) {
@@ -337,22 +371,23 @@ class Pharmacierespository {
       };
     } catch (e) {
       print('❌ Exception uploadPhotoPharmacier: $e');
-      return {
-        'success': false,
-        'message': 'Erreur: $e',
-      };
+      return {'success': false, 'message': 'Erreur: $e'};
     }
   }
 
   // ===== METTRE À JOUR PHARMACIE (DIO) =====
   // Repositories/PharmacieRepository.dart
 
-  Future<Map<String, dynamic>?> mettreAJourPharmacie(String codePharmacier, Map<String, dynamic> modifications, File? photo,) async {
+  Future<Map<String, dynamic>?> mettreAJourPharmacie(
+    String codePharmacier,
+    Map<String, dynamic> modifications,
+    File? photo,
+  ) async {
     try {
       print('=== MISE À JOUR PHARMACIE ===');
 
       Map<String, dynamic> formDataMap = {
-        'code_pharmacie': codePharmacier,  // ✅ OBLIGATOIRE
+        'code_pharmacie': codePharmacier, // ✅ OBLIGATOIRE
       };
 
       // Ajouter les champs modifiés
@@ -376,13 +411,23 @@ class Pharmacierespository {
         formDataMap['email_pharmacie'] = modifications['email_pharmacie'];
       }
 
-      if (modifications['horraires_ouverture'] != null) {
-        formDataMap['horraires_ouverture'] = modifications['horraires_ouverture'];
+      if (modifications['horaireEnSemaine'] != null) {
+        formDataMap['horaires_en_semaine'] = modifications['horaireEnSemaine'];
       }
+      if (modifications['horaireSamedi'] != null) {
+        formDataMap['horaires_samedi'] = modifications['horaireSamedi'];
+      }
+      if (modifications['horaireDimanche'] != null) {
+        formDataMap['horaires_dimanche'] = modifications['horaireDimanche'];
+      }else{
 
+        formDataMap['horaires_dimanche'] = "Fermée";
+      }
       // Assurances
       if (modifications['assurances'] != null) {
-        formDataMap['liste_assurance_accepte'] = jsonEncode(modifications['assurances']);
+        formDataMap['liste_assurance_accepte'] = jsonEncode(
+          modifications['assurances'],
+        );
       }
 
       // Photo
@@ -397,13 +442,12 @@ class Pharmacierespository {
 
       // ✅ Utiliser la bonne route
       Response response = await _dio.put(
-        '/pharmacie/modifierpharmacie',  // ✅ Route correcte
+        '/pharmacie/modifierpharmacie', // ✅ Route correcte
         data: formData,
       );
 
       print('✅ Réponse: ${response.data}');
       return response.data as Map<String, dynamic>?;
-
     } catch (e) {
       print('❌ Erreur: $e');
       return {'success': false, 'message': 'Erreur: $e'};

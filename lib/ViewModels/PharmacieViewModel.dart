@@ -133,7 +133,7 @@ class PharmacieViewModel extends ChangeNotifier {
   }
 
   // ===== AJOUTER UNE PHARMACIE =====
-  Future<void> ajouterPharmacie(File image,String codeGerant, String nomPharmacie, String numeroPharmacie, String emailPharmacie, double? latitudePharmacie, double? longitudePharmacie, String villePharmacie, String adresseFournit, String horraires, List<String> assurancesAcceptees,) async {
+  Future<void> ajouterPharmacie(File image,String codeGerant, String nomPharmacie, String numeroPharmacie, String emailPharmacie, double? latitudePharmacie, double? longitudePharmacie, String villePharmacie, String adresseFournit, String horairesEnSemaine,String horairesSamedi,String horairesDimanche, List<String> assurancesAcceptees,) async {
     print('=== ViewModel: ajouterPharmacie ===');
     print('Gérant: $codeGerant');
     print('Nom: $nomPharmacie');
@@ -146,7 +146,7 @@ class PharmacieViewModel extends ChangeNotifier {
 
     try {
       final result = await _pharmacierespository.ajouterPharmacie(
-        image,
+         image,
         codeGerant,
         nomPharmacie,
         numeroPharmacie,
@@ -155,7 +155,9 @@ class PharmacieViewModel extends ChangeNotifier {
         longitudePharmacie,
         villePharmacie,
         adresseFournit,
-        horraires,
+        horairesEnSemaine,
+        horairesSamedi,
+        horairesDimanche,
         assurancesAcceptees,
       );
 

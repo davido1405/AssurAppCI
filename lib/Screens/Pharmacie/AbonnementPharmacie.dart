@@ -1,5 +1,6 @@
 // Screens/Pharmacie/AbonnementPharmacie.dart
 
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Models/AbonnementPharmacie.dart';
 import 'package:assurappci/ViewModels/AbonnementPharmacieViewModel.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
@@ -209,13 +210,57 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
+            //Intitué de l'écran
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 15.h),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        FittedBox(
+                          child: Text(
+                            "ESPACE ABONNEMENT",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Couleurs.accentOrange,
+                            ),
+                          ),
+                        ),
+                        FittedBox(
+                          child: Text(
+                            "Elevez le niveau de votre pharmacie 🚀",
+                            style: TextStyle(
+                              fontSize: 25.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 10.h),
+                        Text(
+                          "Sélectionnez l'abonnement premium pour passer à un niveau supérieur et bénéficier de tous les avantages de GoPharma",
+                          style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // ===== PLAN ACTUEL =====
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20.r),
                 gradient: LinearGradient(
-                  colors: [Colors.lightBlue, Colors.blue],
+                  colors: [Couleurs.primaryGreen, Couleurs.darkGreen],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -299,7 +344,7 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
                               child: Text(
                                 "Gérer",
                                 style: TextStyle(
-                                  color: Colors.blue,
+                                  color: Couleurs.darkGreen,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14.sp,
                                 ),
@@ -391,19 +436,11 @@ class _AbonnementpharmacieState extends State<Abonnementpharmacie> {
 }
 
 // ===== WIDGET CARD FORFAIT =====
-Widget cardForfait({
-  required BuildContext context,
-  required String titre,
-  required String montant,
-  required String description,
-  required List<String> avantageForfait,
-  required bool estRecommande,
-  required VoidCallback action,
-}) {
+Widget cardForfait({required BuildContext context, required String titre, required String montant, required String description, required List<String> avantageForfait, required bool estRecommande, required VoidCallback action,}) {
   return Container(
     decoration: BoxDecoration(
       border: Border.all(
-        color: estRecommande ? Colors.blue : Colors.grey[300]!,
+        color: estRecommande ? Couleurs.darkGreen : Colors.grey[300]!,
         width: estRecommande ? 2.w : 1.w,
       ),
       borderRadius: BorderRadius.circular(16.r),
@@ -432,7 +469,7 @@ Widget cardForfait({
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: estRecommande ? Colors.blue[100] : Colors.grey[200],
+                          color: estRecommande ? Couleurs.lightGreen : Colors.grey[200],
                           borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Padding(
@@ -461,7 +498,7 @@ Widget cardForfait({
                         vertical: 6.h,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                        color: Couleurs.darkGreen,
                         borderRadius: BorderRadius.circular(20.r),
                       ),
                       child: Text(
@@ -510,7 +547,7 @@ Widget cardForfait({
                   children: [
                     Icon(
                       Icons.check_circle,
-                      color: Colors.green,
+                      color: Couleurs.darkGreen,
                       size: 20.sp,
                     ),
                     SizedBox(width: 12.w),
@@ -538,7 +575,7 @@ Widget cardForfait({
             child: ElevatedButton(
               onPressed: action,
               style: ElevatedButton.styleFrom(
-                backgroundColor: estRecommande ? Colors.blue : Colors.grey[200],
+                backgroundColor: estRecommande ? Couleurs.darkGreen : Colors.grey[200],
                 foregroundColor: estRecommande ? Colors.white : Colors.black87,
                 padding: EdgeInsets.symmetric(vertical: 14.h),
                 shape: RoundedRectangleBorder(

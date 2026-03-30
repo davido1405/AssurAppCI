@@ -1,3 +1,4 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Screens/Auth/Connexion.dart';
 import 'package:assurappci/Screens/General/Adressefournit.dart';
 import 'package:assurappci/Screens/General/InformationsPersonnels.dart';
@@ -45,7 +46,7 @@ class Userprofil extends StatelessWidget {
     ];
 
     return Material(
-      color: Colors.grey[100],
+      color: Couleurs.lightGreen,
       child: SafeArea(
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
@@ -57,7 +58,7 @@ class Userprofil extends StatelessWidget {
                 margin: EdgeInsets.all(10.w),
                 padding: EdgeInsets.all(15.w),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Couleurs.darkGreen,
                     borderRadius: BorderRadius.circular(12.r)
                 ),
                 child: Column(
@@ -82,11 +83,11 @@ class Userprofil extends StatelessWidget {
                           children: [
                             Text(
                               "${session?.nomUtilisateur ?? ''} ${session?.prenomUtilisateur ?? ''}",
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.sp,color: Colors.white),
                             ),
                             Text(
                               session?.numeroUtilisateur ?? '',
-                              style: TextStyle(color: Colors.grey[400]),
+                              style: TextStyle(color: Colors.white),
                             ),
                           ],
                         )
@@ -98,7 +99,7 @@ class Userprofil extends StatelessWidget {
                         Expanded(child: Container(
                           padding: EdgeInsets.all(10.w),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Couleurs.lightGreen,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Column(children: [
@@ -110,7 +111,7 @@ class Userprofil extends StatelessWidget {
                         Expanded(child: Container(
                           padding: EdgeInsets.all(10.w),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Couleurs.lightGreen,
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: Column(children: [

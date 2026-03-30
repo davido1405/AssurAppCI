@@ -1,5 +1,6 @@
 // Screens/Pharmacie/Annonce.dart
 
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Models/Annonce.dart';
 import 'package:assurappci/Repositories/Annonces.dart';
 import 'package:assurappci/Repositories/PharmacieRespository.dart';
@@ -118,6 +119,50 @@ class _AnnoncesState extends State<Annonces> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          //Intitué de l'écran
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 15.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        child: Text(
+                          "ESPACE ANNONCE",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Couleurs.accentOrange,
+                          ),
+                        ),
+                      ),
+                      FittedBox(
+                        child: Text(
+                          "📣 Envoyer une annonce",
+                          style: TextStyle(
+                            fontSize: 25.sp,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10.h),
+                      Text(
+                        "Utilisez cette option pour toucher plus de personnes même les non abonnés😏.",
+                        style: TextStyle(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[600]
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: 10.h,),
           // ===== EN-TÊTE =====
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -147,7 +192,7 @@ class _AnnoncesState extends State<Annonces> {
                 icon: Icon(Icons.add, size: 20.sp),
                 label: Text('Nouvelle'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Couleurs.darkGreen,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
                     horizontal: 20.w,
@@ -365,21 +410,21 @@ class _AnnoncesState extends State<Annonces> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 14.sp, color: Colors.grey[600]),
+                    Icon(Icons.calendar_today, size: 14.sp, color: Couleurs.darkGreen),
                     SizedBox(width: 6.w),
                     Text(
                       annonce.datePublication.split(' ')[0],
-                      style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12.sp, color: Couleurs.darkGreen),
                     ),
                   ],
                 ),
                 Row(
                   children: [
-                    Icon(Icons.visibility, size: 14.sp, color: Colors.grey[600]),
+                    Icon(Icons.visibility, size: 14.sp, color: Couleurs.darkGreen),
                     SizedBox(width: 6.w),
                     Text(
                       '${annonce.nombreVue} vues',
-                      style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12.sp, color: Couleurs.darkGreen),
                     ),
                   ],
                 ),
@@ -431,9 +476,10 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Couleurs.lightGreen,
       appBar: AppBar(
         title: Text('Nouvelle Annonce'),
-        backgroundColor: Colors.blue,
+        backgroundColor: Couleurs.darkGreen,
         foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
@@ -453,7 +499,7 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
                     label: Text(type),
                     selected: estSelectionne,
                     onSelected: (selected) => setState(() => _typeSelectionne = type),
-                    selectedColor: Colors.blue,
+                    selectedColor: Couleurs.darkGreen,
                     labelStyle: TextStyle(
                       color: estSelectionne ? Colors.white : Colors.black87,
                       fontWeight: estSelectionne ? FontWeight.bold : FontWeight.normal,
@@ -469,6 +515,8 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
                 decoration: InputDecoration(
                   hintText: 'Ex: Promotion sur les vitamines',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                  filled: true,
+                  fillColor: Colors.white
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Veuillez entrer un titre' : null,
               ),
@@ -481,6 +529,8 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
                 decoration: InputDecoration(
                   hintText: 'Décrivez votre annonce...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                    filled: true,
+                    fillColor: Colors.white
                 ),
                 validator: (value) => value == null || value.isEmpty ? 'Veuillez entrer une description' : null,
               ),
@@ -493,8 +543,11 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
                       style: OutlinedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          backgroundColor: Colors.grey[200]
                       ),
-                      child: Text('Annuler'),
+                      child: Text('Annuler',style: TextStyle(
+                        color: Colors.grey[600]
+                      ),),
                     ),
                   ),
                   SizedBox(width: 16.w),
@@ -502,7 +555,7 @@ class _CreerAnnonceScreenState extends State<CreerAnnonceScreen> {
                     child: ElevatedButton(
                       onPressed: publierAnnonce,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
+                        backgroundColor: Couleurs.darkGreen,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),

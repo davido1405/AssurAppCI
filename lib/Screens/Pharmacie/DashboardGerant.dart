@@ -1,3 +1,4 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Repositories/AbonnementPharmacieRepository.dart';
 import 'package:assurappci/Repositories/PharmacieRespository.dart';
 import 'package:assurappci/Screens/Auth/Connexion.dart';
@@ -232,15 +233,16 @@ class _DashboardGerantState extends State<DashboardGerant> {
         ChangeNotifierProvider.value(value: _pharmacieVM),
       ],
       child: Scaffold(
+        backgroundColor: Couleurs.lightGreen,
         appBar: AppBar(
           title: Text(
-            "Espace Pharmacie",
+            "GoPharma",
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
-          backgroundColor: Colors.deepOrangeAccent,
+          backgroundColor: Couleurs.darkGreen,
           elevation: 0,
           iconTheme: IconThemeData(color: Colors.white),
           actions: [
@@ -275,7 +277,7 @@ class _DashboardGerantState extends State<DashboardGerant> {
         ),
         drawer: _buildDrawer(nomUtilisateur),
         body: Container(
-          color: Colors.grey[100],
+          color: Couleurs.lightGreen,
           child: SafeArea(child: _chargerPages()),
         ),
       ),
@@ -291,7 +293,7 @@ class _DashboardGerantState extends State<DashboardGerant> {
             width: double.infinity,
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(
-              color: Colors.deepOrangeAccent,
+              gradient: LinearGradient(colors: [Couleurs.darkGreen,Couleurs.primaryGreen],begin: Alignment.topLeft,end: Alignment.bottomRight),
             ),
             child: SafeArea(
               child: Column(
@@ -303,7 +305,7 @@ class _DashboardGerantState extends State<DashboardGerant> {
                     child: Icon(
                       Icons.person,
                       size: 40.sp,
-                      color: Colors.deepOrangeAccent,
+                      color: Couleurs.darkGreen,
                     ),
                   ),
                   SizedBox(height: 12.h),
@@ -414,10 +416,10 @@ class _DashboardGerantState extends State<DashboardGerant> {
 
                 // Déconnexion
                 ListTile(
-                  leading: Icon(Icons.logout, color: Colors.red),
+                  leading: Icon(Icons.logout, color: Couleurs.emergencyRed),
                   title: Text(
                     "Déconnexion",
-                    style: TextStyle(color: Colors.red),
+                    style: TextStyle(color: Couleurs.emergencyRed),
                   ),
                   onTap: () {
                     showDialog(
@@ -428,7 +430,9 @@ class _DashboardGerantState extends State<DashboardGerant> {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: Text('Annuler'),
+                            child: Text('Annuler',style: TextStyle(
+                                color: Colors.black54
+                            ),),
                           ),
                           ElevatedButton(
                             onPressed: () {
@@ -440,9 +444,11 @@ class _DashboardGerantState extends State<DashboardGerant> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
+                              backgroundColor: Couleurs.emergencyRed
                             ),
-                            child: Text('Déconnexion'),
+                            child: Text('Déconnexion',style: TextStyle(
+                              color: Colors.white
+                            ),),
                           ),
                         ],
                       ),
@@ -466,7 +472,7 @@ class _DashboardGerantState extends State<DashboardGerant> {
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
           decoration: BoxDecoration(
-            color: acces.restant == 0 ? Colors.red : Colors.orange,
+            color: acces.restant == 0 ? Colors.red : Couleurs.lightGreen,
             borderRadius: BorderRadius.circular(10.r),
           ),
           child: Text(
@@ -484,28 +490,22 @@ class _DashboardGerantState extends State<DashboardGerant> {
     return null;
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String titre,
-    required bool isActive,
-    required VoidCallback onTap,
-    Widget? badge,
-  }) {
+  Widget _buildMenuItem({required IconData icon, required String titre, required bool isActive, required VoidCallback onTap, Widget? badge,}) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
       decoration: BoxDecoration(
-        color: isActive ? Colors.deepOrangeAccent.withOpacity(0.1) : null,
+        color: isActive ? Couleurs.darkGreen.withOpacity(0.1) : null,
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: ListTile(
         leading: Icon(
           icon,
-          color: isActive ? Colors.deepOrangeAccent : Colors.grey[700],
+          color: isActive ? Couleurs.darkGreen : Colors.grey[700],
         ),
         title: Text(
           titre,
           style: TextStyle(
-            color: isActive ? Colors.deepOrangeAccent : Colors.black87,
+            color: isActive ? Couleurs.darkGreen : Colors.black87,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
