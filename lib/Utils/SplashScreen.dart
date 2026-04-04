@@ -1,9 +1,11 @@
+import 'package:assurappci/Constants/Couleurs.dart';
 import 'package:assurappci/Screens/Auth/Connexion.dart';
 import 'package:assurappci/Screens/Auth/Inscription.dart';
 import 'package:assurappci/Screens/General/Dashboard.dart';
 import 'package:assurappci/Screens/Pharmacie/DashboardGerant.dart';
 import 'package:assurappci/ViewModels/AuthViewModel.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class Splashscreen extends StatefulWidget {
@@ -14,7 +16,6 @@ class Splashscreen extends StatefulWidget {
 }
 
 class _SplashscreenState extends State<Splashscreen> {
-
   @override
   void initState() {
     super.initState();
@@ -28,23 +29,28 @@ class _SplashscreenState extends State<Splashscreen> {
 
     // La View navigue en fonction du résultat
     if (context.read<AuthViewModel>().estConnecte) {
-      if(context.read<AuthViewModel>().session?.typeUtilisateur=="Gestionnaire de pharmacie"){
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => DashboardGerant())
+      if (context.read<AuthViewModel>().session?.typeUtilisateur ==
+          "Gestionnaire de pharmacie") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DashboardGerant()),
         );
-      }else{
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => Dashboard())
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Dashboard()),
         );
       }
     } else {
-      if(context.read<AuthViewModel>().numeroSauvegarde != null){
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => Connexion())
+      if (context.read<AuthViewModel>().numeroSauvegarde != null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Connexion()),
         );
-      }else{
-        Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (context) => Inscription())
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Inscription()),
         );
       }
     }
@@ -53,9 +59,19 @@ class _SplashscreenState extends State<Splashscreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        // Un loader pendant la vérification
-        child: CircularProgressIndicator(),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 300),
+              child: Image.asset('assets/images/Logo avec nom.png',width: 270.w,height: 100.h,),
+            ),
+            Center(child: CircularProgressIndicator(color: Couleurs.darkGreen,)),
+            SizedBox(height: 25.h,)
+          ],
+        ),
       ),
     );
   }

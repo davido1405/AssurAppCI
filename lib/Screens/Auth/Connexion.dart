@@ -51,89 +51,114 @@ class _ConnexionState extends State<Connexion> {
         physics: ScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20.h,),
-            Padding(padding: EdgeInsets.symmetric(vertical: 12.h),child: Center(
-              child: Image.asset("name"),
-            ),),
-            Text("Connexion",style: TextStyle(fontSize: 25.sp,fontWeight: FontWeight.bold),),
-            Text("C'est bien de te revoir 👋",style: TextStyle(fontWeight: FontWeight.w500,color: Colors.grey),),
-            SizedBox(
-              height: 25.h,
-            ),
-
-            // Affiche l'erreur si elle existe
-            if (authViewModel.errorMessage != null)
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 10.w),
-                child: Text(
-                  authViewModel.errorMessage!,
-                  style: TextStyle(color: Colors.red, fontSize: 14.sp),
-                ),
-              ),
             Padding(
-              padding: EdgeInsets.all(10.w),
-              child: Container(
-                height: 300.h,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14.r)
-                ),
-                child: Column(
-                  children: [
+              padding: const EdgeInsets.only(left: 35),
+              child: Image.asset("assets/images/Logo avec nom.png",width: 300.w,height: 125.h,),
+            ),
+            Padding(
+              padding:  EdgeInsets.symmetric(horizontal: 10.w),
+              child: Column(
+                children: [
+                  Text("Connexion",style: TextStyle(fontSize: 25.sp,fontWeight: FontWeight.bold),),
+                  Text("C'est bien de te revoir 👋",style: TextStyle(fontWeight: FontWeight.w600,color: Colors.grey),),
+                  SizedBox(
+                    height: 20.h,
+                  ),
 
+                  // Affiche l'erreur si elle existe
+                  if (authViewModel.errorMessage != null)
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: 30.w),
-                      child: Text("Code Pin à 6 chiffres"),
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
+                      child: Text(
+                        authViewModel.errorMessage!,
+                        style: TextStyle(color: Colors.red, fontSize: 15.sp,fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    Padding(
-                      padding: EdgeInsets.all(10.w),
-                      child: Pinput(
-                        disabledPinTheme: PinTheme(
-                          decoration: BoxDecoration(
-                            color: Couleurs.lightGreen,
-                          )
-                        ),
-                        controller: _codePinController,
-                        length: 6,),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.all(15.w),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [GestureDetector(
-                          onTap:(){
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>Recoverpassword()));
-                          },
-                          child: Text("Pin oublié?",style: TextStyle(
-                        color: Couleurs.darkGreen,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20.sp
-                      ),),)],),
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 25.w),
-                      child: Row(
+                  Padding(
+                    padding: EdgeInsets.all(10.w),
+                    child: Container(
+                      height: 300.h,
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30.r)
+                      ),
+                      child: Column(
                         children: [
-                          Expanded(child: ElevatedButton(
-                            // Affiche un loader pendant la connexion
-                            onPressed: authViewModel.isLoading ? null : _seConnecter,
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor: Couleurs.darkGreen
+                          Padding(
+                            padding: EdgeInsets.symmetric(vertical: 30.w),
+                            child: Text("Entrez votre Pin à 6 chiffres",style: TextStyle(
+                              color: Colors.grey[800],
+                              fontWeight: FontWeight.w400,
+                              fontSize: 20.sp
+                            ),),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal:15.w,),
+                            child: Pinput(
+                              keyboardType: TextInputType.number,
+                              disabledPinTheme: PinTheme(
+                                  decoration: BoxDecoration(
+                                    color: Couleurs.lightGreen,
+                                  )
+                              ),
+                              controller: _codePinController,
+                              obscureText: true,
+                              obscuringCharacter: '●',
+                              length: 6,),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(15.w),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [GestureDetector(
+                                onTap:(){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>Recoverpassword()));
+                                },
+                                child: Text("Pin oublié?",style: TextStyle(
+                                    color: Couleurs.accentOrange,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20.sp
+                                ),),)],),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 25.w),
+                            child: Row(
+                              children: [
+                                Expanded(child: ElevatedButton(
+                                  // Affiche un loader pendant la connexion
+                                  onPressed: authViewModel.isLoading ? null : _seConnecter,
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Couleurs.accentOrange
+                                  ),
+                                  child: authViewModel.isLoading
+                                      ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          SizedBox(
+                                            height: 25.h,width: 25.w,
+                                              child: CircularProgressIndicator(color: Colors.white,strokeWidth: 3,)),
+                                          SizedBox(width: 10.w,),
+                                          Text("Connexion...")
+                                        ],
+                                      )
+                                      : Text("Se connecter", style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18.sp
+                                  )),
+                                )),
+                              ],
                             ),
-                            child: authViewModel.isLoading
-                                ? CircularProgressIndicator(color: Colors.white)
-                                : Text("Se connecter", style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18.sp
-                            )),
-                          )),
+                          )
                         ],
                       ),
-                    )
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(height: 25.h,),

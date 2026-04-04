@@ -236,15 +236,15 @@ class _AccueilState extends State<Accueil> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              SizedBox(height: 15.h),
+                              SizedBox(height: 10.h),
                               SizedBox(
                                 width:
                                     MediaQuery.of(context).size.width -
                                     48.w, // Largeur écran - marges
                                 child: Text(
-                                  "Localisez toutes les pharmacies autour de vous dans un rayoon de 5KM 😎 et vérifiez les assurances utilisées instantanément 👌",
+                                  "Localisez toutes les pharmacies autour de vous dans un rayon de 5KM 😎 et vérifiez les assurances acceptées instantanément 👌",
                                   //textAlign: TextAlign.center,
-                                  style: TextStyle(fontSize: 16.sp),
+                                  style: TextStyle(fontSize: 16.sp,color: Colors.grey[600]),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 3,
                                 ),
@@ -511,7 +511,7 @@ class _AccueilState extends State<Accueil> {
 
   Widget cardPharmacie(Pharmacie pharmacie) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18.r)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
       color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -615,8 +615,7 @@ class _AccueilState extends State<Accueil> {
               children: [
                 Row(
                   children: [
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
+                    Expanded(
                       child: Text(
                         pharmacie.nomPharmacie,
                         style: TextStyle(
@@ -639,11 +638,13 @@ class _AccueilState extends State<Accueil> {
                       size: 25.r,
                     ),
                     SizedBox(width: 5.w),
-                    Text(
-                      pharmacie.adresseFournit ?? "Aucune adresse fournit",
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        color: Colors.grey[600],
+                    Expanded(
+                      child: Text(
+                        pharmacie.adresseFournit ?? "Aucune adresse fournit",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],

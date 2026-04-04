@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Detailspharmacie extends StatefulWidget {
   final Pharmacie pharmacie;
@@ -149,6 +150,29 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
     }
   }
 
+  Future<void>lancerAppel(String numeroTelephone)async{
+    final Uri lanchUri=Uri(scheme: 'tel',path: numeroTelephone);
+    if(await canLaunchUrl(lanchUri)){
+      await launchUrl(lanchUri);
+    }else{
+      if(mounted){
+        showDialog(context: context, builder: (BuildContext context){
+          return AlertDialog(
+            title: Text("Appel téléphonique"),
+            content: Text("Impossible d'appeler cette pharmacie"),
+            actions: [
+              Center(child: ElevatedButton(onPressed: (){
+                if(mounted){
+                  Navigator.pop(context);
+                }
+              }, child: Text("Compris")),)
+            ],
+          );
+        });
+      }
+    }
+  }
+
   bool dejaAbonne = false;
 
   @override
@@ -156,28 +180,14 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
     return Scaffold(
       backgroundColor: Couleurs.lightGreen,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
         backgroundColor: Couleurs.darkGreen,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: () {
-                if (mounted) {
-                  Navigator.pop(context);
-                }
-              },
-              child: Icon(Icons.arrow_back, color: Colors.white),
-            ),
-            SizedBox(width: 10.w),
-            Text(
-              "Détails ${widget.pharmacie.nomPharmacie}",
-              style: TextStyle(
-                overflow: TextOverflow.ellipsis,
-                color: Colors.white,
-              ),
-            ),
-          ],
+        iconTheme: IconThemeData(color: Colors.white),
+        title: Text(
+          "Détails ${widget.pharmacie.nomPharmacie}",
+          style: TextStyle(
+            overflow: TextOverflow.ellipsis,
+            color: Colors.white,
+          ),
         ),
       ),
       body: SafeArea(
@@ -218,7 +228,8 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                                 },
                               )
                             : Image.asset(
-                                "assets/images/b.jpg",fit: BoxFit.cover,
+                                "assets/images/b.jpg",
+                                fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     width: double.maxFinite,
@@ -330,7 +341,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                             color: Couleurs.darkGreen,
                           ),
                           title: Text(
-                            "Horaires d'ouverture",
+                            "HORAIRES D'OUVERTURE",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 20.sp,
@@ -364,14 +375,90 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                           "Dimanche",
                           widget.pharmacie.horaires_dimanche ?? 'Fermée',
                         ),
-                        Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: Colors.grey[300],
-                          indent: 20,
-                          endIndent: 20,
+                      ],
+                    ),
+                  ),
+                ),
+                //Section contacts pharmacie
+                Padding(
+                  padding: EdgeInsets.all(18.w),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18.r),
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black,
+                          blurRadius: 5,
+                          blurStyle: BlurStyle.inner,
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            CupertinoIcons.info_circle_fill,
+                            size: 30.r,
+                            color: Couleurs.darkGreen,
+                          ),
+                          title: Text(
+                            "CONTACTS ",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20.sp,
+                            ),
+                          ),
+                        ),
+                        ListTile(
+                          leading: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                              color: Couleurs.lightGreen,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Icon(
+                                CupertinoIcons.phone_solid,
+                                color: Couleurs.darkGreen,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            "Numéro",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          subtitle: Text(
+                            widget.pharmacie.numeroPharmacie,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        ListTile(
+                          leading: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.r),
+                              color: Couleurs.lightGreen,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.all(15),
+                              child: Icon(
+                                CupertinoIcons.mail_solid,
+                                color: Couleurs.darkGreen,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            "Email",
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                          subtitle: Text(
+                            widget.pharmacie.emailPharmacie ??
+                                'Aucune email fourni',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         SizedBox(height: 12.h),
+                        //Bouton d'action
                         Padding(
                           padding: EdgeInsets.all(10.w),
                           child: Row(
@@ -379,7 +466,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                               Expanded(
                                 child: GestureDetector(
                                   onTap: () {
-                                    print("Appel en cours");
+                                    lancerAppel(widget.pharmacie.numeroPharmacie);
                                   },
                                   child: Container(
                                     decoration: BoxDecoration(
@@ -394,7 +481,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                                               MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              CupertinoIcons.phone,
+                                              CupertinoIcons.phone_solid,
                                               color: Colors.white,
                                             ),
                                             SizedBox(width: 10.w),
@@ -438,7 +525,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                       leading: Container(
                         decoration: BoxDecoration(
                           color: Couleurs.lightGreen,
-                          borderRadius: BorderRadius.circular(18.r),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                         child: Padding(
                           padding: EdgeInsets.all(15.w),
@@ -450,12 +537,8 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                         ),
                       ),
                       title: Text(
-                        "Adresse de la pharmacie",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 18.sp,
-                          color: Colors.white,
-                        ),
+                        "Adresse pharmacie",
+                        style: TextStyle(fontSize: 18.sp, color: Colors.white),
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,8 +548,8 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                             widget.pharmacie.adresseFournit!,
                             style: TextStyle(
                               color: Colors.white,
-                                fontSize: 20.sp,
-                              fontWeight: FontWeight.bold
+                              fontSize: 20.sp,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                           GestureDetector(
@@ -516,7 +599,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18.r),
-                      color: Colors.grey[200],
+                      color: Colors.white,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black,
@@ -530,11 +613,11 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                         ListTile(
                           leading: Icon(
                             CupertinoIcons.shield_lefthalf_fill,
-                            color: Colors.black,
-                            size: 25.r,
+                            color: Couleurs.darkGreen,
+                            size: 30.r,
                           ),
                           title: Text(
-                            "Assurances acceptées",
+                            "ASSURANCES ACCEPTEES",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 20.sp,
@@ -573,6 +656,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                     ),
                   ),
                 ),
+                //Bouton d'action
                 Padding(
                   padding: EdgeInsets.all(20.w),
                   child: Center(
@@ -588,8 +672,8 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                       },
                       label: Text(
                         dejaAbonne == true
-                            ? "Desactiver abonnement"
-                            : "S'abonner à la pharmacie",
+                            ? "Desactiver les notifications"
+                            : "Activer les notifications",
                         style: TextStyle(
                           color: dejaAbonne == true
                               ? Colors.grey[200]
@@ -607,7 +691,7 @@ class _DetailspharmacieState extends State<Detailspharmacie> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: dejaAbonne == true
                             ? Colors.grey
-                            : Couleurs.darkGreen,
+                            : Couleurs.accentOrange,
                       ),
                     ),
                   ),
